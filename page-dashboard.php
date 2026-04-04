@@ -85,6 +85,8 @@ $service_items = array(
 $admin_form_errors = array();
 $admin_form_success = '';
 
+$client_status_notifications = array();
+
 $admin_selected_request_id = 0;
 if ($is_admin_user && isset($_GET['request_id'])) {
     $admin_selected_request_id = absint($_GET['request_id']);
@@ -284,6 +286,8 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
     }
 
     if (empty($admin_form_errors) && $admin_selected_request) {
+        $previous_status = (string) get_post_meta($admin_selected_request->ID, 'wf_request_status', true);
+
         wp_update_post(
             array(
                 'ID' => $admin_selected_request->ID,
@@ -297,6 +301,11 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
         update_post_meta($admin_selected_request->ID, 'wf_full_goals', $admin_full_goals);
         update_post_meta($admin_selected_request->ID, 'wf_service_items', $admin_service_items);
         update_post_meta($admin_selected_request->ID, 'wf_request_status', $admin_request_status);
+
+        if ($previous_status !== $admin_request_status) {
+            update_post_meta($admin_selected_request->ID, 'wf_status_notification', 'unread');
+            update_post_meta($admin_selected_request->ID, 'wf_status_changed_at', wp_date('Y-m-d H:i:s'));
+        }
 
         $admin_form_success = 'Request updated successfully. Changes are now saved.';
     }
@@ -347,6 +356,7 @@ foreach ($user_request_ids as $request_id) {
     $status = (string) get_post_meta($request_id, 'wf_request_status', true);
     $items = get_post_meta($request_id, 'wf_service_items', true);
     $items_count = is_array($items) ? count($items) : 0;
+    $notification_flag = (string) get_post_meta($request_id, 'wf_status_notification', true);
 
     $active_services_count += $items_count;
 
@@ -356,6 +366,17 @@ foreach ($user_request_ids as $request_id) {
         $in_review_count++;
     } else {
         $submitted_count++;
+    }
+
+    if ('unread' === $notification_flag) {
+        $status_label = isset($request_status_labels[$status]) ? $request_status_labels[$status] : 'Submitted';
+        $client_status_notifications[] = array(
+            'title' => get_the_title($request_id),
+            'status' => $status_label,
+            'changed_at' => (string) get_post_meta($request_id, 'wf_status_changed_at', true),
+        );
+
+        update_post_meta($request_id, 'wf_status_notification', 'read');
     }
 }
 
@@ -436,6 +457,25 @@ if ($is_admin_user) {
                     </div>
 
                     <h3>Recent Requests</h3>
+                    <?php if (!empty($client_status_notifications)) : ?>
+                        <div class="status-notifications" role="status" aria-live="polite">
+                            <h3>Status Updates</h3>
+                            <ul class="dashboard-list dashboard-list-compact">
+                                <?php foreach ($client_status_notifications as $status_notice) : ?>
+                                    <li>
+                                        <strong><?php echo esc_html($status_notice['title']); ?></strong>
+                                        <span>
+                                            <?php echo esc_html('New status: ' . $status_notice['status']); ?>
+                                            <?php if (!empty($status_notice['changed_at'])) : ?>
+                                                <?php echo esc_html(' | Updated: ' . $status_notice['changed_at']); ?>
+                                            <?php endif; ?>
+                                        </span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+
                     <?php if ($recent_requests->have_posts()) : ?>
                         <ul class="dashboard-list">
                             <?php while ($recent_requests->have_posts()) : $recent_requests->the_post(); ?>
@@ -666,7 +706,14 @@ if ($is_admin_user) {
                                             <?php the_title(); ?>
                                             <small>(<?php echo esc_html(get_the_author_meta('display_name', (int) get_post_field('post_author', get_the_ID()))); ?>)</small>
                                         </span>
-                                        <span><?php echo esc_html($row_status); ?> | <a href="<?php echo esc_url($edit_link); ?>">Review / Edit</a></span>
+                                        <span>
+                                            <?php echo esc_html($row_status); ?> |
+                                            <form class="inline-review-form" method="get" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>">
+                                                <input type="hidden" name="dashboard_tab" value="tab-admin-requests" />
+                                                <input type="hidden" name="request_id" value="<?php echo esc_attr((string) get_the_ID()); ?>" />
+                                                <button type="submit" class="inline-link-button">Review / Edit</button>
+                                            </form>
+                                        </span>
                                     </li>
                                 <?php endwhile; ?>
                             </ul>

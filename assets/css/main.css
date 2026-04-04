@@ -295,6 +295,33 @@ body.menu-open {
   align-items: center;
 }
 
+.status-notifications {
+  margin: 14px 0;
+  border: 1px solid rgba(46, 89, 255, 0.28);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(46, 89, 255, 0.09), rgba(0, 194, 168, 0.08));
+  padding: 12px;
+}
+
+.status-notifications h3 {
+  margin: 0 0 8px;
+}
+
+.inline-review-form {
+  display: inline;
+}
+
+.inline-link-button {
+  background: none;
+  border: 0;
+  color: var(--brand);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+}
+
 .dashboard-actions {
   margin-top: 14px;
   display: flex;

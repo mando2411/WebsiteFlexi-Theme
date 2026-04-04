@@ -329,6 +329,15 @@ Always read this file before making any future changes.
 	- Admin form remains on admin tab after save/validation.
 - Header dashboard action continues to open custom `/dashboard` route, not default WP admin dashboard UI.
 
+## Implemented: Phase 2.1 Fixes
+- Client status-change notifications added in dashboard overview:
+	- When admin changes request status, client sees a status update notification in dashboard.
+	- Notification is marked as read after display.
+- Admin Review/Edit navigation hardened:
+	- Replaced direct query link with GET form submit button for `Review / Edit` action.
+	- This avoids malformed navigation cases that could result in blank page behavior.
+- Added styling for status notification box and inline review button.
+
 
 بياناتى 
 Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions
