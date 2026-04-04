@@ -92,6 +92,15 @@ if ($is_admin_user && isset($_GET['request_id'])) {
     $admin_selected_request_id = absint($_GET['request_id']);
 }
 
+if ($is_admin_user && isset($_POST['website_flexi_admin_pick_request'])) {
+    if (isset($_POST['website_flexi_admin_pick_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_admin_pick_nonce'])), 'website_flexi_admin_pick_action')) {
+        $admin_selected_request_id = isset($_POST['pick_request_id']) ? absint($_POST['pick_request_id']) : 0;
+        $initial_tab = 'tab-admin-requests';
+    } else {
+        $admin_form_errors[] = 'Security check failed while opening the request.';
+    }
+}
+
 $admin_selected_request = null;
 $admin_about_business = '';
 $admin_business_type = '';
@@ -708,9 +717,10 @@ if ($is_admin_user) {
                                         </span>
                                         <span>
                                             <?php echo esc_html($row_status); ?> |
-                                            <form class="inline-review-form" method="get" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>">
-                                                <input type="hidden" name="dashboard_tab" value="tab-admin-requests" />
-                                                <input type="hidden" name="request_id" value="<?php echo esc_attr((string) get_the_ID()); ?>" />
+                                            <form class="inline-review-form" method="post" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-admin-requests">
+                                                <?php wp_nonce_field('website_flexi_admin_pick_action', 'website_flexi_admin_pick_nonce'); ?>
+                                                <input type="hidden" name="pick_request_id" value="<?php echo esc_attr((string) get_the_ID()); ?>" />
+                                                <input type="hidden" name="website_flexi_admin_pick_request" value="1" />
                                                 <button type="submit" class="inline-link-button">Review / Edit</button>
                                             </form>
                                         </span>

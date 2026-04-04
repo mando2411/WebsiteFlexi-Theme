@@ -338,6 +338,11 @@ Always read this file before making any future changes.
 	- This avoids malformed navigation cases that could result in blank page behavior.
 - Added styling for status notification box and inline review button.
 
+## Implemented: Phase 2.2 Review/Edit Stability Fix
+- Converted `Review / Edit` action in admin tab from query navigation to secure POST pick action with nonce.
+- Selected request now opens inside same dashboard route reliably and sets admin tab state server-side.
+- Added security error handling if pick-request nonce fails.
+
 
 بياناتى 
 Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions
