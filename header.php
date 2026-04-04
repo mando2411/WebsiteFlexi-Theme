@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 
 $login_url  = website_flexi_get_login_url();
 $signup_url = website_flexi_get_signup_url();
+$dashboard_url = website_flexi_get_dashboard_url();
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -35,7 +36,7 @@ $signup_url = website_flexi_get_signup_url();
             </nav>
             <div class="auth-actions" aria-label="Authentication actions">
                 <?php if (is_user_logged_in()) : ?>
-                    <a class="btn btn-secondary btn-auth" href="<?php echo esc_url(admin_url()); ?>">Dashboard</a>
+                    <a class="btn btn-secondary btn-auth" href="<?php echo esc_url($dashboard_url); ?>">Dashboard</a>
                     <a class="btn btn-primary btn-auth" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Logout</a>
                 <?php else : ?>
                     <a class="btn btn-secondary btn-auth" href="<?php echo esc_url($login_url); ?>">Login</a>

@@ -4,6 +4,7 @@
   var parallaxItems = document.querySelectorAll('[data-parallax]');
   var menuToggle = document.querySelector('.menu-toggle');
   var headerTools = document.querySelector('#header-tools');
+  var dashboardTabs = document.querySelectorAll('.dashboard-tab[data-tab-target]');
 
   if (menuToggle && headerTools) {
     function closeMenu() {
@@ -42,6 +43,30 @@
       if (window.innerWidth > 900) {
         closeMenu();
       }
+    });
+  }
+
+  if (dashboardTabs.length) {
+    dashboardTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var targetId = tab.getAttribute('data-tab-target');
+        var targetPanel = document.getElementById(targetId);
+
+        if (!targetPanel) {
+          return;
+        }
+
+        dashboardTabs.forEach(function (currentTab) {
+          currentTab.classList.remove('is-active');
+        });
+
+        document.querySelectorAll('.dashboard-panel').forEach(function (panel) {
+          panel.classList.remove('is-active');
+        });
+
+        tab.classList.add('is-active');
+        targetPanel.classList.add('is-active');
+      });
     });
   }
 

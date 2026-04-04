@@ -106,6 +106,20 @@ function website_flexi_get_signup_url() {
     return $signup_url;
 }
 
+function website_flexi_get_dashboard_url() {
+    $dashboard_url = website_flexi_get_page_url_by_template('page-dashboard.php', '');
+
+    if (!$dashboard_url) {
+        $dashboard_url = website_flexi_get_page_url_by_slug('dashboard');
+    }
+
+    if (!$dashboard_url) {
+        $dashboard_url = home_url('/dashboard/');
+    }
+
+    return $dashboard_url;
+}
+
 function website_flexi_custom_login_url($login_url, $redirect, $force_reauth) {
     if (is_admin()) {
         return $login_url;
@@ -160,6 +174,29 @@ function website_flexi_render_auth_virtual_pages() {
         return;
     }
 
+    if (website_flexi_is_auth_path('dashboard')) {
+        if (!is_user_logged_in()) {
+            wp_safe_redirect(
+                add_query_arg(
+                    'redirect_to',
+                    rawurlencode(website_flexi_get_dashboard_url()),
+                    website_flexi_get_login_url()
+                )
+            );
+            exit;
+        }
+
+        $template_file = locate_template('page-dashboard.php');
+        if (!$template_file) {
+            return;
+        }
+
+        status_header(200);
+        nocache_headers();
+        include $template_file;
+        exit;
+    }
+
     if (website_flexi_is_auth_path('login')) {
         $template_file = locate_template('page-login.php');
         if (!$template_file) {
@@ -204,6 +241,13 @@ function website_flexi_auth_slug_template_override($template) {
         $signup_template = locate_template('page-signup.php');
         if ($signup_template) {
             return $signup_template;
+        }
+    }
+
+    if ('dashboard' === $slug) {
+        $dashboard_template = locate_template('page-dashboard.php');
+        if ($dashboard_template) {
+            return $dashboard_template;
         }
     }
 
@@ -264,6 +308,10 @@ function website_flexi_custom_auth_document_title($title) {
 
     if (website_flexi_is_auth_path('signup') || website_flexi_is_auth_path('register')) {
         return 'Sign Up - ' . $site_name;
+    }
+
+    if (website_flexi_is_auth_path('dashboard')) {
+        return 'Dashboard - ' . $site_name;
     }
 
     return $title;
