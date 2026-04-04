@@ -5,6 +5,8 @@ if (!defined('ABSPATH')) {
 
 get_header();
 
+$pillars = array('Social Media', 'Paid Ads', 'Web Development', 'Creative Strategy', 'Brand Growth', 'AI Automation');
+
 $offers = array(
     array(
         'title' => 'Exclusive Cash Payment Offers',
@@ -43,29 +45,42 @@ $services = array(
     ),
 );
 ?>
-<section class="hero reveal">
+<section class="hero reveal" data-parallax>
+    <div class="hero-glow hero-glow-a" aria-hidden="true"></div>
+    <div class="hero-glow hero-glow-b" aria-hidden="true"></div>
     <div class="container hero-grid">
-        <div>
-            <p class="kicker">DIGITAL MARKETING + DEVELOPMENT</p>
-            <h1>Grow Your Business Online with Website Flexi</h1>
+        <div class="hero-copy">
+            <p class="kicker">CREATIVE DIGITAL AGENCY</p>
+            <h1>Future-Ready Marketing, Built for Brands That Move Fast</h1>
             <p>
-                We help businesses win online through social media, digital advertising, web development,
-                and smart growth systems tailored to your goals.
+                Website Flexi combines social media, performance ads, and web engineering into one creative growth engine.
+                Every campaign, page, and conversion flow is designed to scale your business.
             </p>
             <div class="hero-actions">
-                <a class="btn btn-primary" href="#contact">Get Started</a>
-                <a class="btn btn-secondary" href="#services">Learn More</a>
+                <a class="btn btn-primary" href="#contact">Start Your Growth Plan</a>
+                <a class="btn btn-secondary" href="#services">Explore Services</a>
             </div>
         </div>
-        <div class="stats-card">
-            <h2>Worldwide Experience</h2>
+        <div class="stats-card glass-card reveal-stagger" data-reveal-delay="1">
+            <h2>Impact Snapshot</h2>
             <ul>
-                <li><strong>436</strong><span>Websites</span></li>
-                <li><strong>97%</strong><span>Positive Feedback</span></li>
-                <li><strong>80+</strong><span>Users</span></li>
-                <li><strong>72+</strong><span>Contributors</span></li>
+                <li><strong data-counter="436">436</strong><span>Websites</span></li>
+                <li><strong data-counter="97">97</strong><span>Positive Feedback %</span></li>
+                <li><strong data-counter="80">80</strong><span>Active Users +</span></li>
+                <li><strong data-counter="72">72</strong><span>Contributors +</span></li>
             </ul>
         </div>
+    </div>
+</section>
+
+<section class="signal-strip" aria-label="Core capabilities">
+    <div class="signal-track">
+        <?php foreach ($pillars as $pillar) : ?>
+            <span><?php echo esc_html($pillar); ?></span>
+        <?php endforeach; ?>
+        <?php foreach ($pillars as $pillar) : ?>
+            <span><?php echo esc_html($pillar); ?></span>
+        <?php endforeach; ?>
     </div>
 </section>
 
@@ -73,8 +88,8 @@ $services = array(
     <div class="container">
         <h2>Flexible Payment Options</h2>
         <div class="card-grid">
-            <?php foreach ($offers as $offer) : ?>
-                <article class="card">
+            <?php foreach ($offers as $index => $offer) : ?>
+                <article class="card glass-card reveal-stagger" data-reveal-delay="<?php echo esc_attr($index + 1); ?>">
                     <h3><?php echo esc_html($offer['title']); ?></h3>
                     <p><?php echo esc_html($offer['text']); ?></p>
                 </article>
@@ -85,13 +100,13 @@ $services = array(
 
 <section class="services reveal" id="services">
     <div class="container">
-        <h2>What We Do</h2>
+        <h2>What We Build</h2>
         <p class="section-intro">
             Full-service digital solutions for brands that want real growth, measurable results, and long-term impact.
         </p>
         <div class="card-grid">
-            <?php foreach ($services as $service) : ?>
-                <article class="card">
+            <?php foreach ($services as $index => $service) : ?>
+                <article class="card service-card reveal-stagger" data-reveal-delay="<?php echo esc_attr($index + 1); ?>">
                     <h3><?php echo esc_html($service['title']); ?></h3>
                     <p><?php echo esc_html($service['text']); ?></p>
                 </article>
@@ -100,7 +115,7 @@ $services = array(
     </div>
 </section>
 
-<section class="about reveal">
+<section class="about reveal" data-parallax>
     <div class="container about-box">
         <h2>Achieve Your Goals with Flexi</h2>
         <p>
@@ -112,7 +127,7 @@ $services = array(
 
 <section class="contact reveal" id="contact">
     <div class="container contact-cta">
-        <h2>Ready to Scale Your Business?</h2>
+        <h2>Ready to Launch the Next Big Version of Your Brand?</h2>
         <p>Tell us your goal and we will craft the right plan for social media, ads, website, and growth.</p>
         <a class="btn btn-primary" href="<?php echo esc_url(home_url('/contact')); ?>">Book a Consultation</a>
     </div>

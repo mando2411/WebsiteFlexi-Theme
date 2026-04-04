@@ -48,8 +48,8 @@ Always read this file before making any future changes.
 
 - Path: front-page.php
 	Purpose: Custom homepage layout and service sections.
-	Key symbols: $offers, $services arrays, section IDs offers/services/contact.
-	Notes: Main business copy and homepage blocks are here.
+	Key symbols: $pillars, $offers, $services arrays, section IDs offers/services/contact.
+	Notes: Main business copy, signal strip ticker, and animation hooks are here.
 
 - Path: index.php
 	Purpose: Fallback template for posts/pages if no specific template exists.
@@ -58,13 +58,13 @@ Always read this file before making any future changes.
 
 - Path: assets/css/main.css
 	Purpose: Main visual system and responsive styling.
-	Key symbols: CSS variables, .hero, .card-grid, .reveal.
-	Notes: Controls typography, colors, spacing, and animations.
+	Key symbols: CSS variables, .hero-glow, .signal-strip, .glass-card, .reveal-stagger.
+	Notes: Controls futuristic style, gradients, motion, and responsive layout.
 
 - Path: assets/js/main.js
 	Purpose: Scroll reveal animation behavior.
-	Key symbols: IntersectionObserver on .reveal elements.
-	Notes: Progressive enhancement; safe fallback if unsupported.
+	Key symbols: IntersectionObserver, stagger delays, counter animation, parallax.
+	Notes: Handles reveal timing, animated counters, and parallax movement.
 
 ## Quick Navigation
 - Feature/Area: (example: Header layout)
@@ -81,6 +81,11 @@ Always read this file before making any future changes.
 	Main file: front-page.php
 	Related files: assets/css/main.css, assets/js/main.js
 	Entry point: front-page template
+
+- Feature/Area: Futuristic animations and motion system
+	Main file: assets/js/main.js
+	Related files: front-page.php, assets/css/main.css
+	Entry point: .reveal/.reveal-stagger, [data-counter], [data-parallax]
 
 - Feature/Area: Site header navigation
 	Main file: header.php
@@ -105,6 +110,11 @@ Always read this file before making any future changes.
 	Change: Created first complete version of Website Flexi WordPress theme.
 	Files touched: style.css, functions.php, header.php, footer.php, front-page.php, index.php, assets/css/main.css, assets/js/main.js
 	Why: Start project with a production-style structure for digital marketing services.
+
+- Date: 2026-04-04
+	Change: Redesigned homepage to a futuristic creative style with richer animations.
+	Files touched: front-page.php, assets/css/main.css, assets/js/main.js
+	Why: Reflect creative agency identity and improve visual impact.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.
