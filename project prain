@@ -33,8 +33,8 @@ Always read this file before making any future changes.
 
 - Path: functions.php
 	Purpose: Theme setup and assets enqueue.
-	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets, website_flexi_get_page_url_by_template.
-	Notes: Registers menu, loads CSS/JS, and resolves auth page URLs by assigned template.
+	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets, website_flexi_get_login_url, website_flexi_get_signup_url, website_flexi_redirect_default_login_page.
+	Notes: Registers menu, loads CSS/JS, resolves auth URLs, redirects wp-login.php GET requests, and serves virtual /login and /signup routes without WP pages.
 
 - Path: header.php
 	Purpose: Shared page header and navigation.
@@ -115,7 +115,12 @@ Always read this file before making any future changes.
 - Feature/Area: Login URL redirection fix
 	Main file: functions.php
 	Related files: header.php, page-login.php, page-signup.php
-	Entry point: login_url and register_url filters
+	Entry point: login_url/register_url filters + login_init redirect + template_include override
+
+- Feature/Area: Virtual auth routes without pages
+	Main file: functions.php
+	Related files: page-login.php, page-signup.php
+	Entry point: template_redirect (website_flexi_render_auth_virtual_pages)
 
 - Feature/Area: Footer and legal text
 	Main file: footer.php
@@ -155,6 +160,16 @@ Always read this file before making any future changes.
 	Change: Fixed login/signup links to resolve by page template instead of slug only.
 	Files touched: functions.php, header.php, project prain
 	Why: Prevent redirecting users to default wp-login.php when custom auth pages exist.
+
+- Date: 2026-04-04
+	Change: Added forced redirect from wp-login.php to branded login/signup pages and unified auth URL helpers.
+	Files touched: functions.php, header.php, page-login.php, page-signup.php, project prain
+	Why: Ensure users always land on custom auth UI instead of default WordPress login page.
+
+- Date: 2026-04-04
+	Change: Added virtual routing for /login and /signup even when no WordPress pages exist.
+	Files touched: functions.php, project prain
+	Why: Fix ERR_TOO_MANY_REDIRECTS and "No content found" when auth pages are not created in dashboard.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.

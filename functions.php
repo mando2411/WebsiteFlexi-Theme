@@ -131,6 +131,56 @@ function website_flexi_custom_register_url($register_url) {
 }
 add_filter('register_url', 'website_flexi_custom_register_url');
 
+function website_flexi_get_request_path() {
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
+    $path = wp_parse_url($request_uri, PHP_URL_PATH);
+
+    if (!is_string($path) || '' === $path) {
+        return '/';
+    }
+
+    return trailingslashit($path);
+}
+
+function website_flexi_is_auth_path($path_slug) {
+    $request_path = website_flexi_get_request_path();
+    $target_path  = trailingslashit(home_url('/' . ltrim($path_slug, '/')));
+    $target_only  = trailingslashit(wp_parse_url($target_path, PHP_URL_PATH));
+
+    return $request_path === $target_only;
+}
+
+function website_flexi_render_auth_virtual_pages() {
+    if (is_admin()) {
+        return;
+    }
+
+    if (website_flexi_is_auth_path('login')) {
+        $template_file = locate_template('page-login.php');
+        if (!$template_file) {
+            return;
+        }
+
+        status_header(200);
+        nocache_headers();
+        include $template_file;
+        exit;
+    }
+
+    if (website_flexi_is_auth_path('signup') || website_flexi_is_auth_path('register')) {
+        $template_file = locate_template('page-signup.php');
+        if (!$template_file) {
+            return;
+        }
+
+        status_header(200);
+        nocache_headers();
+        include $template_file;
+        exit;
+    }
+}
+add_action('template_redirect', 'website_flexi_render_auth_virtual_pages', 1);
+
 function website_flexi_auth_slug_template_override($template) {
     if (!is_page()) {
         return $template;
