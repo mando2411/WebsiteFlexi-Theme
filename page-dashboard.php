@@ -429,7 +429,7 @@ if ($is_admin_user) {
     );
 }
 ?>
-<section class="dashboard-page reveal">
+<section class="dashboard-page">
     <div class="container">
         <div class="dashboard-head glass-card">
             <p class="kicker">WELCOME</p>

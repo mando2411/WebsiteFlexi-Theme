@@ -347,6 +347,11 @@ Always read this file before making any future changes.
 - Fixed admin request form prefill logic so selected request data loads correctly after POST pick action.
 - Root cause: data loading was restricted to non-POST requests, leaving fields empty on Review/Edit submit flow.
 
+## Implemented: Phase 2.4 Blank Dashboard Visibility Fix
+- Removed `reveal` class from dashboard section.
+- Root cause hypothesis: when JS fails/interrupted, reveal state keeps opacity hidden and page appears blank despite header/styles loading.
+- Result: dashboard content remains visible even if frontend JS has runtime issues.
+
 
 بياناتى 
 Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions
