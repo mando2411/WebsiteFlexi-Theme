@@ -68,6 +68,65 @@
         targetPanel.classList.add('is-active');
       });
     });
+
+    var openRequestButton = document.getElementById('open-new-project-request');
+    if (openRequestButton) {
+      openRequestButton.addEventListener('click', function () {
+        var targetTab = document.querySelector('.dashboard-tab[data-tab-target="tab-projects"]');
+        if (targetTab) {
+          targetTab.click();
+        }
+      });
+    }
+  }
+
+  var serviceItemsContainer = document.querySelector('[data-service-items]');
+  var addServiceButton = document.querySelector('[data-add-service-item]');
+  var serviceTemplate = document.getElementById('service-item-template');
+  var fullServiceToggle = document.querySelector('[data-full-service-toggle]');
+  var fullServiceGoals = document.querySelector('[data-full-service-goals]');
+
+  function updateServiceItemNames() {
+    if (!serviceItemsContainer) {
+      return;
+    }
+
+    var cards = serviceItemsContainer.querySelectorAll('[data-service-item]');
+    cards.forEach(function (card, index) {
+      var serviceField = card.querySelector('[data-name="service"]') || card.querySelector('select[name*="[service]"]');
+      var actionsField = card.querySelector('[data-name="actions"]') || card.querySelector('select[name*="[actions]"]');
+      var descriptionField = card.querySelector('[data-name="description"]') || card.querySelector('textarea[name*="[description]"]');
+
+      if (serviceField) {
+        serviceField.name = 'service_items[' + index + '][service]';
+      }
+
+      if (actionsField) {
+        actionsField.name = 'service_items[' + index + '][actions][]';
+      }
+
+      if (descriptionField) {
+        descriptionField.name = 'service_items[' + index + '][description]';
+      }
+    });
+  }
+
+  if (serviceItemsContainer) {
+    updateServiceItemNames();
+  }
+
+  if (addServiceButton && serviceItemsContainer && serviceTemplate) {
+    addServiceButton.addEventListener('click', function () {
+      var fragment = serviceTemplate.content.cloneNode(true);
+      serviceItemsContainer.appendChild(fragment);
+      updateServiceItemNames();
+    });
+  }
+
+  if (fullServiceToggle && fullServiceGoals) {
+    fullServiceToggle.addEventListener('change', function () {
+      fullServiceGoals.classList.toggle('is-visible', !!fullServiceToggle.checked);
+    });
   }
 
   if (!('IntersectionObserver' in window) || !revealItems.length) {

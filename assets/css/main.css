@@ -302,6 +302,78 @@ body.menu-open {
   gap: 10px;
 }
 
+.project-request-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.project-request-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.project-request-form input,
+.project-request-form select,
+.project-request-form textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--ink);
+}
+
+.project-request-form select[multiple] {
+  min-height: 130px;
+}
+
+.project-request-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.project-request-form input:focus,
+.project-request-form select:focus,
+.project-request-form textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(46, 89, 255, 0.14);
+}
+
+.project-request-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.service-items {
+  display: grid;
+  gap: 12px;
+}
+
+.service-item-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.project-request-hint {
+  color: var(--muted);
+}
+
+.full-service-goals {
+  display: none;
+}
+
+.full-service-goals.is-visible {
+  display: block;
+}
+
 .auth-container {
   display: grid;
   place-items: center;
@@ -867,6 +939,10 @@ h1 {
   .dashboard-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .project-request-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -962,6 +1038,10 @@ h1 {
   .dashboard-list li {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .service-item-card {
+    padding: 10px;
   }
 
   .dashboard-actions .btn {

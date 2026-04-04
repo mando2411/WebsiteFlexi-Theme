@@ -16,6 +16,29 @@ function website_flexi_theme_setup() {
 }
 add_action('after_setup_theme', 'website_flexi_theme_setup');
 
+function website_flexi_register_project_request_cpt() {
+    register_post_type(
+        'wf_project_request',
+        array(
+            'labels' => array(
+                'name'          => __('Project Requests', 'website-flexi-theme'),
+                'singular_name' => __('Project Request', 'website-flexi-theme'),
+            ),
+            'public'             => false,
+            'show_ui'            => true,
+            'show_in_menu'       => true,
+            'menu_position'      => 26,
+            'menu_icon'          => 'dashicons-clipboard',
+            'supports'           => array('title', 'editor', 'author', 'custom-fields'),
+            'capability_type'    => 'post',
+            'map_meta_cap'       => true,
+            'exclude_from_search'=> true,
+            'publicly_queryable' => false,
+        )
+    );
+}
+add_action('init', 'website_flexi_register_project_request_cpt');
+
 function website_flexi_enqueue_assets() {
     $style_path = get_template_directory() . '/assets/css/main.css';
     $script_path = get_template_directory() . '/assets/js/main.js';

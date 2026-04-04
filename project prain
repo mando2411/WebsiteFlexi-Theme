@@ -240,6 +240,73 @@ Always read this file before making any future changes.
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.
 
+## Pending Feature Spec (Project Submission Flow)
+- Target: Logged-in client dashboard should start with zero values and allow submitting a new project request.
+- Add CTA: "Apply for a New Project" button in dashboard.
+- Service categories required:
+	- Facebook
+	- Instagram
+	- TikTok
+	- YouTube
+	- Website
+	- Google Business Profile
+	- Google Merchant
+	- Content Creator
+	- Logo
+	- Design
+	- Reels
+	- SEO
+- For each selected service, open multi-select options:
+	- Build from scratch
+	- Edit & Improve
+	- Management
+	- Ads
+	- Fix an issue
+- After selecting options, show description textarea for problem/request details.
+- Show helper text: "Don’t worry, your request will be reviewed carefully. If your selection is not accurate, it will be corrected during review."
+- Add "Add another service" action to support multiple service blocks in one submission.
+- Add top business onboarding fields:
+	- About yourself / your business
+	- Business type (store or other)
+	- Legal status (commercial register, tax card, licenses, or not)
+- Add special checkbox/action:
+	- "If you are a new business and want Website Flexi to handle all digital marketing services, click here."
+	- When enabled, show textarea for full goals and full requirements.
+- Everything must be fully responsive for mobile.
+- Main goal: client can submit a new project request from dashboard.
+- Next phase note: admin tab for reviewing submitted projects with permissions.
+
+## Implemented: Project Submission Flow (Phase 1)
+- Custom post type added: `wf_project_request` (stored in WP admin for future review workflow).
+- Dashboard now starts with request-based KPIs (submitted/in-review/completed/service lines), naturally zero for new users.
+- Added "Apply for a New Project" CTA in dashboard overview.
+- Added complete request form in Projects tab with:
+	- About business field
+	- Business type field
+	- Legal status selector
+	- Full-service checkbox for new businesses
+	- Full goals textarea shown conditionally
+	- Service request blocks with:
+		- Service selector (from required catalog)
+		- Multi-select actions
+		- Detailed description
+	- "Add another service" dynamic button
+	- Submission hint and success/error feedback
+- Implemented secure handling:
+	- Nonce verification
+	- Sanitization/validation
+	- Save structured request data in post meta
+	- Default status set to `submitted`
+- Dashboard button in header opens custom `/dashboard` route (styled dashboard, not WP default).
+- Fully responsive styling added for all new dashboard form elements.
+- JS behaviors added for:
+	- Dashboard tab opening from CTA
+	- Dynamic service item addition and field naming
+	- Full-service goals toggle visibility
+
+## Next Phase (Planned)
+- Build admin review tab with permissions and status actions for submitted project requests.
+
 
 بياناتى 
 Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions
