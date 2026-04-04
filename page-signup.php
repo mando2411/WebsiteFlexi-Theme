@@ -9,8 +9,7 @@ if (!defined('ABSPATH')) {
 
 get_header();
 
-$login_page = get_page_by_path('login');
-$login_url  = $login_page ? get_permalink($login_page) : wp_login_url();
+$login_url = website_flexi_get_login_url();
 
 $errors = new WP_Error();
 $success_message = '';

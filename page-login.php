@@ -9,8 +9,7 @@ if (!defined('ABSPATH')) {
 
 get_header();
 
-$signup_page = get_page_by_path('signup');
-$signup_url  = $signup_page ? get_permalink($signup_page) : wp_registration_url();
+$signup_url = website_flexi_get_signup_url();
 ?>
 <section class="auth-page reveal">
     <div class="container auth-container">
