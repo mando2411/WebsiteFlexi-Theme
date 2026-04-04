@@ -39,6 +39,29 @@ function website_flexi_register_project_request_cpt() {
 }
 add_action('init', 'website_flexi_register_project_request_cpt');
 
+function website_flexi_register_client_asset_cpt() {
+    register_post_type(
+        'wf_client_asset',
+        array(
+            'labels' => array(
+                'name'          => __('Client Assets', 'website-flexi-theme'),
+                'singular_name' => __('Client Asset', 'website-flexi-theme'),
+            ),
+            'public'             => false,
+            'show_ui'            => true,
+            'show_in_menu'       => true,
+            'menu_position'      => 27,
+            'menu_icon'          => 'dashicons-images-alt2',
+            'supports'           => array('title', 'editor', 'author', 'custom-fields'),
+            'capability_type'    => 'post',
+            'map_meta_cap'       => true,
+            'exclude_from_search'=> true,
+            'publicly_queryable' => false,
+        )
+    );
+}
+add_action('init', 'website_flexi_register_client_asset_cpt');
+
 function website_flexi_enqueue_assets() {
     $style_path = get_template_directory() . '/assets/css/main.css';
     $script_path = get_template_directory() . '/assets/js/main.js';

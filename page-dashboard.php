@@ -69,11 +69,16 @@ $service_actions = array(
 
 $form_errors = array();
 $form_success = '';
+$asset_form_errors = array();
+$asset_form_success = '';
 $about_business = '';
 $business_type = '';
 $legal_status = '';
 $needs_full_service = false;
 $full_goals = '';
+$asset_title = '';
+$asset_description = '';
+$asset_text = '';
 $service_items = array(
     array(
         'service' => '',
@@ -95,6 +100,10 @@ if (isset($_GET['project_request_resubmitted']) && '1' === sanitize_text_field(w
 
 if (isset($_GET['needs_updated']) && '1' === sanitize_text_field(wp_unslash($_GET['needs_updated']))) {
     $form_success = 'Needs update has been saved.';
+}
+
+if (isset($_GET['asset_submitted']) && '1' === sanitize_text_field(wp_unslash($_GET['asset_submitted']))) {
+    $asset_form_success = 'Asset submitted successfully.';
 }
 
 if (isset($_GET['admin_request_updated']) && '1' === sanitize_text_field(wp_unslash($_GET['admin_request_updated']))) {
@@ -213,6 +222,85 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_apply_n
                 ) . '#tab-overview'
             );
             exit;
+        }
+    }
+}
+
+if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_asset_submit'])) {
+    $initial_tab = 'tab-assets';
+
+    if (!isset($_POST['website_flexi_asset_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_asset_nonce'])), 'website_flexi_asset_action')) {
+        $asset_form_errors[] = 'Security check failed while submitting asset.';
+    }
+
+    $asset_title = isset($_POST['asset_title']) ? sanitize_text_field(wp_unslash($_POST['asset_title'])) : '';
+    $asset_description = isset($_POST['asset_description']) ? sanitize_textarea_field(wp_unslash($_POST['asset_description'])) : '';
+    $asset_text = isset($_POST['asset_text']) ? sanitize_textarea_field(wp_unslash($_POST['asset_text'])) : '';
+
+    $has_uploaded_file = isset($_FILES['asset_file']) && isset($_FILES['asset_file']['size']) && (int) $_FILES['asset_file']['size'] > 0;
+
+    if ('' === $asset_title) {
+        $asset_form_errors[] = 'Asset title is required.';
+    }
+
+    if ('' === $asset_description) {
+        $asset_form_errors[] = 'Asset description is required.';
+    }
+
+    if ('' === $asset_text && !$has_uploaded_file) {
+        $asset_form_errors[] = 'Please add asset text or upload a file.';
+    }
+
+    if (empty($asset_form_errors)) {
+        $asset_post_id = wp_insert_post(
+            array(
+                'post_type'    => 'wf_client_asset',
+                'post_status'  => 'publish',
+                'post_title'   => $asset_title,
+                'post_content' => $asset_description,
+                'post_author'  => get_current_user_id(),
+            ),
+            true
+        );
+
+        if (is_wp_error($asset_post_id)) {
+            $asset_form_errors[] = $asset_post_id->get_error_message();
+        } else {
+            update_post_meta($asset_post_id, 'wf_asset_text', $asset_text);
+
+            $asset_kind = '' !== $asset_text ? 'text' : 'file';
+
+            if ($has_uploaded_file) {
+                if (!function_exists('media_handle_upload')) {
+                    require_once ABSPATH . 'wp-admin/includes/file.php';
+                    require_once ABSPATH . 'wp-admin/includes/media.php';
+                    require_once ABSPATH . 'wp-admin/includes/image.php';
+                }
+
+                $attachment_id = media_handle_upload('asset_file', $asset_post_id);
+                if (is_wp_error($attachment_id)) {
+                    wp_delete_post($asset_post_id, true);
+                    $asset_form_errors[] = $attachment_id->get_error_message();
+                } else {
+                    update_post_meta($asset_post_id, 'wf_asset_attachment_id', $attachment_id);
+                    $asset_kind = '' !== $asset_text ? 'mixed' : 'file';
+                }
+            }
+
+            if (empty($asset_form_errors)) {
+                update_post_meta($asset_post_id, 'wf_asset_kind', $asset_kind);
+
+                wp_safe_redirect(
+                    add_query_arg(
+                        array(
+                            'dashboard_tab' => 'tab-assets',
+                            'asset_submitted' => '1',
+                        ),
+                        website_flexi_get_dashboard_url()
+                    ) . '#tab-assets'
+                );
+                exit;
+            }
         }
     }
 }
@@ -614,9 +702,10 @@ $achievements_query = new WP_Query($achievement_args);
 
 $assets_query = new WP_Query(
     array(
-        'post_type'      => 'attachment',
-        'post_status'    => 'inherit',
-        'posts_per_page' => 8,
+        'post_type'      => 'wf_client_asset',
+        'post_status'    => 'publish',
+        'author'         => get_current_user_id(),
+        'posts_per_page' => 20,
     )
 );
 
@@ -743,6 +832,7 @@ get_header();
                                                     <button class="btn btn-primary" type="submit" name="website_flexi_apply_needs" value="1">Apply Needs Update</button>
                                                 </div>
                                             </form>
+                                            <p class="project-request-hint">You can add required data, branch titles, images, or videos through Assets. <a href="<?php echo esc_url(add_query_arg('dashboard_tab', 'tab-assets', website_flexi_get_dashboard_url())); ?>#tab-assets" data-open-tab="tab-assets">Go to Assets now</a>.</p>
                                         </div>
                                     <?php endif; ?>
 
@@ -910,17 +1000,88 @@ get_header();
 
                 <section class="dashboard-panel glass-card" id="tab-assets">
                     <h2>Assets</h2>
+                    <p class="project-request-hint">Add textual assets, images, videos, branch lists, or any required files to speed up project execution.</p>
+
+                    <?php if (!empty($asset_form_success)) : ?>
+                        <p class="auth-message success"><?php echo esc_html($asset_form_success); ?></p>
+                    <?php endif; ?>
+
+                    <?php if (!empty($asset_form_errors)) : ?>
+                        <div class="auth-errors" role="alert" aria-live="polite">
+                            <?php foreach ($asset_form_errors as $asset_error) : ?>
+                                <p><?php echo esc_html($asset_error); ?></p>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <form class="project-request-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-assets">
+                        <?php wp_nonce_field('website_flexi_asset_action', 'website_flexi_asset_nonce'); ?>
+
+                        <p>
+                            <label for="asset_title">Asset Title</label>
+                            <input type="text" id="asset_title" name="asset_title" value="<?php echo esc_attr($asset_title); ?>" placeholder="Example: Branch Addresses / Brand Video / Product Titles" required />
+                        </p>
+
+                        <p>
+                            <label for="asset_description">Asset Description</label>
+                            <textarea id="asset_description" name="asset_description" rows="3" placeholder="Describe this asset to help the team understand and work faster..." required><?php echo esc_textarea($asset_description); ?></textarea>
+                        </p>
+
+                        <p>
+                            <label for="asset_text">Text Asset (optional)</label>
+                            <textarea id="asset_text" name="asset_text" rows="4" placeholder="Paste any text data, branch details, lists, credentials notes, etc."><?php echo esc_textarea($asset_text); ?></textarea>
+                        </p>
+
+                        <p>
+                            <label for="asset_file">Upload File (image/video/document)</label>
+                            <input type="file" id="asset_file" name="asset_file" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" />
+                        </p>
+
+                        <div class="dashboard-actions">
+                            <button class="btn btn-primary" type="submit" name="website_flexi_asset_submit" value="1">Add Asset</button>
+                        </div>
+                    </form>
+
                     <?php if ($assets_query->have_posts()) : ?>
-                        <ul class="dashboard-list">
+                        <div class="request-cards">
                             <?php while ($assets_query->have_posts()) : $assets_query->the_post(); ?>
-                                <li>
-                                    <a href="<?php echo esc_url(wp_get_attachment_url(get_the_ID())); ?>" target="_blank" rel="noopener noreferrer"><?php the_title(); ?></a>
-                                    <span><?php echo esc_html(get_the_date()); ?></span>
-                                </li>
+                                <?php
+                                $asset_id = get_the_ID();
+                                $asset_kind = (string) get_post_meta($asset_id, 'wf_asset_kind', true);
+                                $asset_text_value = (string) get_post_meta($asset_id, 'wf_asset_text', true);
+                                $asset_attachment_id = (int) get_post_meta($asset_id, 'wf_asset_attachment_id', true);
+                                $asset_file_url = $asset_attachment_id ? wp_get_attachment_url($asset_attachment_id) : '';
+                                ?>
+                                <article class="request-card status-processing">
+                                    <header class="request-card-head">
+                                        <div>
+                                            <h4><?php the_title(); ?></h4>
+                                            <p><?php echo esc_html(get_the_date()); ?></p>
+                                        </div>
+                                        <span class="status-badge status-processing"><?php echo esc_html(ucfirst($asset_kind ? $asset_kind : 'asset')); ?></span>
+                                    </header>
+
+                                    <div class="request-note request-note-processing">
+                                        <?php the_content(); ?>
+                                    </div>
+
+                                    <?php if (!empty($asset_text_value)) : ?>
+                                        <div class="request-note request-note-needs">
+                                            <strong>Text Data:</strong>
+                                            <p><?php echo nl2br(esc_html($asset_text_value)); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($asset_file_url)) : ?>
+                                        <div class="request-note request-note-approved">
+                                            <a href="<?php echo esc_url($asset_file_url); ?>" target="_blank" rel="noopener noreferrer">Open Uploaded File</a>
+                                        </div>
+                                    <?php endif; ?>
+                                </article>
                             <?php endwhile; ?>
-                        </ul>
+                        </div>
                     <?php else : ?>
-                        <p>No assets have been uploaded yet.</p>
+                        <p>No assets uploaded yet. Add your first asset above.</p>
                     <?php endif; ?>
                 </section>
 

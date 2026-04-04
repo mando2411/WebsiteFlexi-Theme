@@ -236,6 +236,11 @@ Always read this file before making any future changes.
 	Files touched: page-dashboard.php, project prain
 	Why: Keep current interface language in English until Arabic localization phase.
 
+- Date: 2026-04-04
+	Change: Added client assets workflow in dashboard with direct In-Need hint to Assets tab.
+	Files touched: functions.php, page-dashboard.php, project prain
+	Why: Let clients submit structured text/files (title + description + text/file) and quickly provide missing materials requested during review.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.
