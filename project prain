@@ -69,12 +69,12 @@ Always read this file before making any future changes.
 - Path: assets/css/main.css
 	Purpose: Main visual system and responsive styling.
 	Key symbols: CSS variables, .menu-toggle, .header-tools.is-open, .hero-glow, .signal-strip, .glass-card, .reveal-stagger.
-	Notes: Controls futuristic style plus complete mobile responsiveness across header, sections, and auth pages.
+	Notes: Controls futuristic style plus full responsive behavior; includes polished WP login form/button styling and mobile header dropdown layout fixes.
 
 - Path: assets/js/main.js
 	Purpose: Scroll reveal animation behavior.
 	Key symbols: menu toggle handlers, IntersectionObserver, stagger delays, counter animation, parallax.
-	Notes: Handles mobile nav open/close and animation behavior.
+	Notes: Handles mobile nav open/close, auto-close on link click, and animation behavior.
 
 ## Quick Navigation
 - Feature/Area: (example: Header layout)
@@ -190,6 +190,11 @@ Always read this file before making any future changes.
 	Change: Upgraded full theme responsiveness and added mobile dropdown navigation.
 	Files touched: header.php, assets/css/main.css, assets/js/main.js, project prain
 	Why: Deliver a polished, reliable mobile experience across all theme pages.
+
+- Date: 2026-04-04
+	Change: Fixed broken header layout and refined login/signup form visual styles on desktop and mobile.
+	Files touched: assets/css/main.css, assets/js/main.js, project prain
+	Why: Remove unstyled default WP form look and stabilize responsive header behavior.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.

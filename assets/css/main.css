@@ -66,6 +66,7 @@ h3,
   align-items: center;
   justify-content: space-between;
   gap: 18px;
+  position: relative;
 }
 
 .header-tools {
@@ -148,6 +149,8 @@ h3,
   text-decoration: none;
   font-weight: 600;
   position: relative;
+  display: inline-flex;
+  align-items: center;
 }
 
 .nav-menu a::after {
@@ -274,15 +277,56 @@ body.menu-open {
   margin: 0 0 14px;
 }
 
+#website-flexi-loginform {
+  display: grid;
+  gap: 2px;
+}
+
 #website-flexi-loginform label {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
 }
 
+#website-flexi-loginform .login-remember {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+#website-flexi-loginform .login-remember label {
+  margin: 0;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+#website-flexi-rememberme {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+}
+
 #website-flexi-login-submit {
   border: 0;
   cursor: pointer;
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 10px 18px;
+  background: linear-gradient(120deg, var(--brand), var(--brand-2));
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 12px 28px rgba(46, 89, 255, 0.34);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+#website-flexi-login-submit:hover {
+  transform: translateY(-2px);
+}
+
+#website-flexi-login-submit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(46, 89, 255, 0.22), 0 12px 28px rgba(46, 89, 255, 0.34);
 }
 
 .hero {
@@ -625,10 +669,9 @@ h1 {
   .header-tools {
     display: none;
     position: absolute;
-    top: calc(100% + 8px);
-    right: 4vw;
-    width: 100%;
-    max-width: min(420px, 92vw);
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(420px, 92vw);
     border-radius: 16px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.96);
@@ -648,6 +691,18 @@ h1 {
     gap: 10px;
     flex-direction: column;
     align-items: flex-start;
+    width: 100%;
+  }
+
+  .nav-menu li {
+    width: 100%;
+  }
+
+  .nav-menu a {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(46, 89, 255, 0.06);
   }
 
   .auth-actions {
@@ -699,8 +754,18 @@ h1 {
     grid-template-columns: 1fr;
   }
 
+  .header-tools {
+    width: 100%;
+    right: 0;
+    left: 0;
+  }
+
   .btn,
   .btn-auth {
+    width: 100%;
+  }
+
+  #website-flexi-login-submit {
     width: 100%;
   }
 
