@@ -3,14 +3,188 @@
 This file is the main brain and memory for this project.
 Always read this file before making any future changes.
 
+## Mandatory Workflow (Do Not Skip)
+1. Before any code edit: read this file completely.
+2. During edit: note target file path and purpose.
+3. After edit: append a log entry in "Change Log".
+4. If a new feature/module is added: register it in "Code Map".
+5. Keep entries short and searchable.
+
 ## Project Overview
-- (To be filled)
+- Project type: WordPress custom theme for a digital marketing company.
+- Main scope: Social media, paid ads, web development, websites, and digital growth services.
+- Brand working name: Website Flexi.
 
 ## Current Goals
-- (To be filled)
+- Build a clean, fast, conversion-focused homepage.
+- Keep theme structure simple and scalable.
+- Maintain a precise code map for fast future edits.
+
+## Code Map
+- Path: (example: wp-content/themes/your-theme/functions.php)
+	Purpose: (what this file handles)
+	Key symbols: (functions/classes/hooks)
+	Notes: (important dependencies or edit cautions)
+
+- Path: style.css
+	Purpose: WordPress theme declaration and metadata.
+	Key symbols: Theme header comment.
+	Notes: Required for WordPress theme detection.
+
+- Path: functions.php
+	Purpose: Theme setup and assets enqueue.
+	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets.
+	Notes: Registers menu and loads CSS/JS.
+
+- Path: header.php
+	Purpose: Shared page header and navigation.
+	Key symbols: wp_head, wp_nav_menu, wp_body_open.
+	Notes: Primary menu location is "primary".
+
+- Path: footer.php
+	Purpose: Shared footer with copyright and wp_footer.
+	Key symbols: wp_footer.
+	Notes: Common footer text can be edited here.
+
+- Path: front-page.php
+	Purpose: Custom homepage layout and service sections.
+	Key symbols: $offers, $services arrays, section IDs offers/services/contact.
+	Notes: Main business copy and homepage blocks are here.
+
+- Path: index.php
+	Purpose: Fallback template for posts/pages if no specific template exists.
+	Key symbols: have_posts, the_post, the_content.
+	Notes: Keep as minimal safe fallback.
+
+- Path: assets/css/main.css
+	Purpose: Main visual system and responsive styling.
+	Key symbols: CSS variables, .hero, .card-grid, .reveal.
+	Notes: Controls typography, colors, spacing, and animations.
+
+- Path: assets/js/main.js
+	Purpose: Scroll reveal animation behavior.
+	Key symbols: IntersectionObserver on .reveal elements.
+	Notes: Progressive enhancement; safe fallback if unsupported.
+
+## Quick Navigation
+- Feature/Area: (example: Header layout)
+	Main file: (path)
+	Related files: (paths)
+	Entry point: (hook/function/template)
+
+- Feature/Area: Theme setup and asset loading
+	Main file: functions.php
+	Related files: style.css, assets/css/main.css, assets/js/main.js
+	Entry point: after_setup_theme, wp_enqueue_scripts
+
+- Feature/Area: Homepage hero/offers/services
+	Main file: front-page.php
+	Related files: assets/css/main.css, assets/js/main.js
+	Entry point: front-page template
+
+- Feature/Area: Site header navigation
+	Main file: header.php
+	Related files: functions.php, assets/css/main.css
+	Entry point: get_header()
+
+- Feature/Area: Footer and legal text
+	Main file: footer.php
+	Related files: assets/css/main.css
+	Entry point: get_footer()
 
 ## Decisions Log
 - 2026-04-04: Created the central project memory file.
 
+## Change Log
+- Date: 2026-04-04
+	Change: Defined mandatory read/write workflow for this memory file.
+	Files touched: project prain
+	Why: Keep project navigation fast as codebase grows.
+
+- Date: 2026-04-04
+	Change: Created first complete version of Website Flexi WordPress theme.
+	Files touched: style.css, functions.php, header.php, footer.php, front-page.php, index.php, assets/css/main.css, assets/js/main.js
+	Why: Start project with a production-style structure for digital marketing services.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
+- If you edit code, always document exact path and purpose in this file.
+
+
+بياناتى 
+Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions
+Expand your business and build a strong online presence with Website Flexi, your trusted partner for modern website design, development, and digital growth. Strengthen your brand identity, attract more customers, and reach new markets with customized solutions built around your goals.
+The future of your business starts online — join the Website Flexi Platform today!
+
+Get Started
+
+
+
+
+Exclusive Cash Payment Offers
+Pay in cash and enjoy special discounts on all our website design, development, and digital services. Get the best value for your business while building a powerful online presence.
+Take advantage of our cash payment offers today!
+
+
+Pay Later in Easy Installments
+Flexible Payment Plans for Small Businesses, Grow your business without financial stress! Make a small down payment and pay the remaining balance through one of our flexible installment plans.
+Start your project today and pay later!
+
+
+Get Your Website for Free
+No Payment Needed!, want to expand your customer base without extra costs? Now you can get a professional website for free with a profit of payment.
+Simply submit the form to apply — quick approval 
+Don’t wait — get your free website today
+
+
+Support and Maintenance
+Enjoy round-the-clock technical support and website maintenance to keep your business running smoothly. Our expert team is available 24/7 to handle updates, fixes, and any issues — ensuring your website stays fast, secure, and online at all times.
+Get reliable 24/7 support today!
+
+
+FEATURES
+Achieve Your Website Goals with Flexi
+Turn your vision into reality! With Website Flexi, you can achieve your goals — get more views, more sales, and more leads while expanding your business without limits.
+We combine expert web design, development, and digital marketing to help your project shine online. Whatever your goals are, you’ll achieve them here — because at Flexi, we’re more than just a team.
+We love what we do, and we do it with passion, creativity, and the best industry experts to ensure your success.
+Learn More
+WHAT WE DO
+Industry-Focused Flexi Solutions
+
+Online Stores
+Build your online store with Website Flexi and enjoy modern, user-friendly designs that attract customers and boost sales. Our stores feature advanced AJAX search for fast product browsing, seamless navigation, and secure payment systems to ensure a smooth shopping experience.
+Launch your eCommerce store today and start selling with confidence!
+
+
+Service Websites
+Create a powerful service website with Website Flexi and showcase your business with modern, responsive designs built to convert visitors into clients. Our websites include custom forms for all types of service industries — from consulting and healthcare to maintenance and education — making it easy for your customers to reach you.
+Get your professional service website today with Website Flexi!
+
+
+Personal Websites
+Create a personal website that represents who you are — whether it’s an online introduction, a professional CV, or a portfolio highlighting your skills, experience, and services. With Website Flexi, you can build a modern, elegant website that helps you stand out, grow your personal brand, and connect with new opportunities.
+Start building your personal website today and make your first impression online!
+
+
+Company Websites
+Create a professional company website that reflects your brand identity and helps more people discover your business. With Website Flexi, you can build a modern, responsive website that enhances your credibility, attracts new clients, and strengthens your online presence.
+Start building your company website today and make your brand stand out!
+
+WORLDWIDE EXPERIENCE
+Customer Anticipations
+Elevate Your Industry with Tailored Website Flexi Solutions, Empower your business with specialized web solutions from Website Flexi, crafted to address your industry’s unique challenges and accelerate digital transformation. Our custom website designs and innovative digital tools help you drive growth, improve efficiency, and stay ahead in a competitive market.
+Transform your industry presence with Website Flexi toda
+
+Websites
+436
+Positive Feedback
+97
+%
+Users
+80
++
+Contributors
+72
++
+
+
