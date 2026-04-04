@@ -38,8 +38,8 @@ Always read this file before making any future changes.
 
 - Path: header.php
 	Purpose: Shared page header and navigation.
-	Key symbols: wp_head, wp_nav_menu, wp_body_open, .auth-actions links.
-	Notes: Includes About/Contact links and Login/Sign Up actions using template-based URL lookup.
+	Key symbols: wp_head, wp_nav_menu, wp_body_open, .menu-toggle, .auth-actions links.
+	Notes: Includes responsive mobile menu toggle and auth actions.
 
 - Path: page-login.php
 	Purpose: Custom WordPress-compatible login page template.
@@ -68,13 +68,13 @@ Always read this file before making any future changes.
 
 - Path: assets/css/main.css
 	Purpose: Main visual system and responsive styling.
-	Key symbols: CSS variables, .hero-glow, .signal-strip, .glass-card, .reveal-stagger.
-	Notes: Controls futuristic style, gradients, motion, responsive layout, and auth form styles.
+	Key symbols: CSS variables, .menu-toggle, .header-tools.is-open, .hero-glow, .signal-strip, .glass-card, .reveal-stagger.
+	Notes: Controls futuristic style plus complete mobile responsiveness across header, sections, and auth pages.
 
 - Path: assets/js/main.js
 	Purpose: Scroll reveal animation behavior.
-	Key symbols: IntersectionObserver, stagger delays, counter animation, parallax.
-	Notes: Handles reveal timing, animated counters, and parallax movement.
+	Key symbols: menu toggle handlers, IntersectionObserver, stagger delays, counter animation, parallax.
+	Notes: Handles mobile nav open/close and animation behavior.
 
 ## Quick Navigation
 - Feature/Area: (example: Header layout)
@@ -106,6 +106,11 @@ Always read this file before making any future changes.
 	Main file: header.php
 	Related files: functions.php, assets/css/main.css
 	Entry point: static .nav-menu links, login/signup slug lookup with WP fallback
+
+- Feature/Area: Mobile responsiveness system
+	Main file: assets/css/main.css
+	Related files: header.php, assets/js/main.js
+	Entry point: media queries (900px and 640px), .menu-toggle JS handlers
 
 - Feature/Area: Login and signup pages
 	Main file: page-login.php
@@ -180,6 +185,11 @@ Always read this file before making any future changes.
 	Change: Hid WordPress admin bar for all non-admin users on frontend.
 	Files touched: functions.php, project prain
 	Why: Keep client-facing UI clean while preserving admin access.
+
+- Date: 2026-04-04
+	Change: Upgraded full theme responsiveness and added mobile dropdown navigation.
+	Files touched: header.php, assets/css/main.css, assets/js/main.js, project prain
+	Why: Deliver a polished, reliable mobile experience across all theme pages.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.
