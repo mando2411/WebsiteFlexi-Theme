@@ -231,6 +231,11 @@ Always read this file before making any future changes.
 	Files touched: functions.php, project prain
 	Why: Fix fatal redeclare error without losing dashboard/login/signup title behavior.
 
+- Date: 2026-04-04
+	Change: Switched custom dashboard UI text from Arabic to English.
+	Files touched: page-dashboard.php, project prain
+	Why: Keep current interface language in English until Arabic localization phase.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.

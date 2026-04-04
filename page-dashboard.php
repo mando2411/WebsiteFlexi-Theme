@@ -69,24 +69,24 @@ $users_count = count_users();
     <div class="container">
         <div class="dashboard-head glass-card">
             <p class="kicker">WELCOME</p>
-            <h1>لوحة تحكم Website Flexi</h1>
-            <p>مرحبًا <?php echo esc_html($current_user->display_name); ?>، تقدر تتابع كل تفاصيل شغلك من مكان واحد.</p>
+            <h1>Website Flexi Dashboard</h1>
+            <p>Hello <?php echo esc_html($current_user->display_name); ?>, you can track all your work details from one place.</p>
         </div>
 
         <div class="dashboard-layout">
             <aside class="dashboard-tabs glass-card" aria-label="Dashboard Tabs">
-                <button class="dashboard-tab is-active" type="button" data-tab-target="tab-overview">لوحة التحكم</button>
-                <button class="dashboard-tab" type="button" data-tab-target="tab-projects">المشاريع</button>
-                <button class="dashboard-tab" type="button" data-tab-target="tab-achievements">الانجازات</button>
-                <button class="dashboard-tab" type="button" data-tab-target="tab-assets">الاصول / Assets</button>
-                <button class="dashboard-tab" type="button" data-tab-target="tab-stats">الاحصائيات</button>
-                <button class="dashboard-tab" type="button" data-tab-target="tab-account">تفاصيل حسابك</button>
-                <a class="dashboard-tab dashboard-tab-link" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">تسجيل خروج</a>
+                <button class="dashboard-tab is-active" type="button" data-tab-target="tab-overview">Dashboard</button>
+                <button class="dashboard-tab" type="button" data-tab-target="tab-projects">Projects</button>
+                <button class="dashboard-tab" type="button" data-tab-target="tab-achievements">Achievements</button>
+                <button class="dashboard-tab" type="button" data-tab-target="tab-assets">Assets</button>
+                <button class="dashboard-tab" type="button" data-tab-target="tab-stats">Statistics</button>
+                <button class="dashboard-tab" type="button" data-tab-target="tab-account">Account Details</button>
+                <a class="dashboard-tab dashboard-tab-link" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Logout</a>
             </aside>
 
             <div class="dashboard-panels">
                 <section class="dashboard-panel is-active glass-card" id="tab-overview">
-                    <h2>لوحة التحكم</h2>
+                    <h2>Dashboard</h2>
                     <div class="dashboard-kpis">
                         <article><strong><?php echo esc_html((string) wp_count_posts($project_types[0])->publish); ?></strong><span>Projects</span></article>
                         <article><strong><?php echo esc_html((string) $post_count->publish); ?></strong><span>Posts</span></article>
@@ -96,7 +96,7 @@ $users_count = count_users();
                 </section>
 
                 <section class="dashboard-panel glass-card" id="tab-projects">
-                    <h2>المشاريع</h2>
+                    <h2>Projects</h2>
                     <?php if ($projects_query->have_posts()) : ?>
                         <ul class="dashboard-list">
                             <?php while ($projects_query->have_posts()) : $projects_query->the_post(); ?>
@@ -107,12 +107,12 @@ $users_count = count_users();
                             <?php endwhile; ?>
                         </ul>
                     <?php else : ?>
-                        <p>لا توجد مشاريع مضافة بعد.</p>
+                        <p>No projects have been added yet.</p>
                     <?php endif; ?>
                 </section>
 
                 <section class="dashboard-panel glass-card" id="tab-achievements">
-                    <h2>الانجازات</h2>
+                    <h2>Achievements</h2>
                     <?php if ($achievements_query->have_posts()) : ?>
                         <ul class="dashboard-list">
                             <?php while ($achievements_query->have_posts()) : $achievements_query->the_post(); ?>
@@ -123,12 +123,12 @@ $users_count = count_users();
                             <?php endwhile; ?>
                         </ul>
                     <?php else : ?>
-                        <p>لا توجد انجازات مضافة حاليًا.</p>
+                        <p>No achievements are available at the moment.</p>
                     <?php endif; ?>
                 </section>
 
                 <section class="dashboard-panel glass-card" id="tab-assets">
-                    <h2>الاصول / Assets</h2>
+                    <h2>Assets</h2>
                     <?php if ($assets_query->have_posts()) : ?>
                         <ul class="dashboard-list">
                             <?php while ($assets_query->have_posts()) : $assets_query->the_post(); ?>
@@ -139,31 +139,31 @@ $users_count = count_users();
                             <?php endwhile; ?>
                         </ul>
                     <?php else : ?>
-                        <p>لا توجد ملفات Assets مرفوعة حتى الآن.</p>
+                        <p>No assets have been uploaded yet.</p>
                     <?php endif; ?>
                 </section>
 
                 <section class="dashboard-panel glass-card" id="tab-stats">
-                    <h2>الاحصائيات</h2>
+                    <h2>Statistics</h2>
                     <ul class="dashboard-list dashboard-list-compact">
-                        <li><strong>إجمالي المقالات:</strong> <span><?php echo esc_html((string) $post_count->publish); ?></span></li>
-                        <li><strong>إجمالي الصفحات:</strong> <span><?php echo esc_html((string) $page_count->publish); ?></span></li>
-                        <li><strong>إجمالي المستخدمين:</strong> <span><?php echo esc_html((string) $users_count['total_users']); ?></span></li>
-                        <li><strong>إجمالي الملفات:</strong> <span><?php echo esc_html((string) wp_count_posts('attachment')->inherit); ?></span></li>
+                        <li><strong>Total Posts:</strong> <span><?php echo esc_html((string) $post_count->publish); ?></span></li>
+                        <li><strong>Total Pages:</strong> <span><?php echo esc_html((string) $page_count->publish); ?></span></li>
+                        <li><strong>Total Users:</strong> <span><?php echo esc_html((string) $users_count['total_users']); ?></span></li>
+                        <li><strong>Total Files:</strong> <span><?php echo esc_html((string) wp_count_posts('attachment')->inherit); ?></span></li>
                     </ul>
                 </section>
 
                 <section class="dashboard-panel glass-card" id="tab-account">
-                    <h2>تفاصيل حسابك</h2>
+                    <h2>Account Details</h2>
                     <ul class="dashboard-list dashboard-list-compact">
-                        <li><strong>الاسم:</strong> <span><?php echo esc_html($current_user->display_name); ?></span></li>
-                        <li><strong>اسم المستخدم:</strong> <span><?php echo esc_html($current_user->user_login); ?></span></li>
-                        <li><strong>البريد:</strong> <span><?php echo esc_html($current_user->user_email); ?></span></li>
-                        <li><strong>الدور:</strong> <span><?php echo esc_html(implode(', ', $current_user->roles)); ?></span></li>
+                        <li><strong>Name:</strong> <span><?php echo esc_html($current_user->display_name); ?></span></li>
+                        <li><strong>Username:</strong> <span><?php echo esc_html($current_user->user_login); ?></span></li>
+                        <li><strong>Email:</strong> <span><?php echo esc_html($current_user->user_email); ?></span></li>
+                        <li><strong>Role:</strong> <span><?php echo esc_html(implode(', ', $current_user->roles)); ?></span></li>
                     </ul>
                     <div class="dashboard-actions">
-                        <a class="btn btn-secondary" href="<?php echo esc_url(admin_url('profile.php')); ?>">تعديل الحساب</a>
-                        <a class="btn btn-primary" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">تسجيل خروج</a>
+                        <a class="btn btn-secondary" href="<?php echo esc_url(admin_url('profile.php')); ?>">Edit Account</a>
+                        <a class="btn btn-primary" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Logout</a>
                     </div>
                 </section>
             </div>
