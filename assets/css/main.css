@@ -393,6 +393,43 @@ body.menu-open {
   color: var(--muted);
 }
 
+.project-needs-form {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.need-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.need-item input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+}
+
+.admin-decline-reason,
+.admin-needs-block {
+  display: none;
+}
+
+.admin-decline-reason.is-visible,
+.admin-needs-block.is-visible {
+  display: block;
+}
+
+.needs-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .full-service-goals {
   display: none;
 }
@@ -1073,6 +1110,10 @@ h1 {
 
   .dashboard-actions .btn {
     width: 100%;
+  }
+
+  .need-item {
+    align-items: flex-start;
   }
 }
 

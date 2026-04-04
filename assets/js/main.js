@@ -148,6 +148,10 @@
   var adminServiceTemplate = document.getElementById('admin-service-item-template');
   var adminFullServiceToggle = document.querySelector('[data-admin-full-service-toggle]');
   var adminFullServiceGoals = document.querySelector('[data-admin-full-service-goals]');
+  var adminRequestStatus = document.getElementById('admin_request_status');
+  var adminDeclineReason = document.querySelector('[data-admin-decline-reason]');
+  var adminNeedsBlock = document.querySelector('[data-admin-needs-block]');
+  var adminNeedsContainer = document.querySelector('[data-admin-needs-container]');
 
   function updateAdminServiceItemNames() {
     if (!adminServiceItemsContainer) {
@@ -190,6 +194,66 @@
     adminFullServiceToggle.addEventListener('change', function () {
       adminFullServiceGoals.classList.toggle('is-visible', !!adminFullServiceToggle.checked);
     });
+  }
+
+  function ensureNeedsInputTail() {
+    if (!adminNeedsContainer) {
+      return;
+    }
+
+    var inputs = adminNeedsContainer.querySelectorAll('input[name="admin_need_fields[]"]');
+    if (!inputs.length) {
+      var firstInput = document.createElement('input');
+      firstInput.type = 'text';
+      firstInput.name = 'admin_need_fields[]';
+      firstInput.placeholder = 'Add one need item';
+      adminNeedsContainer.appendChild(firstInput);
+      inputs = adminNeedsContainer.querySelectorAll('input[name="admin_need_fields[]"]');
+    }
+
+    var lastInput = inputs[inputs.length - 1];
+    if (lastInput.value.trim() !== '') {
+      var newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.name = 'admin_need_fields[]';
+      newInput.placeholder = 'Add one need item';
+      adminNeedsContainer.appendChild(newInput);
+    }
+  }
+
+  function refreshAdminDecisionFields() {
+    if (!adminRequestStatus) {
+      return;
+    }
+
+    var value = adminRequestStatus.value;
+
+    if (adminDeclineReason) {
+      adminDeclineReason.classList.toggle('is-visible', value === 'declined');
+    }
+
+    if (adminNeedsBlock) {
+      adminNeedsBlock.classList.toggle('is-visible', value === 'in_need');
+    }
+
+    if (value === 'in_need') {
+      ensureNeedsInputTail();
+    }
+  }
+
+  if (adminRequestStatus) {
+    adminRequestStatus.addEventListener('change', refreshAdminDecisionFields);
+    refreshAdminDecisionFields();
+  }
+
+  if (adminNeedsContainer) {
+    adminNeedsContainer.addEventListener('input', function (event) {
+      if (event.target && event.target.matches('input[name="admin_need_fields[]"]')) {
+        ensureNeedsInputTail();
+      }
+    });
+
+    ensureNeedsInputTail();
   }
 
   if (!('IntersectionObserver' in window) || !revealItems.length) {

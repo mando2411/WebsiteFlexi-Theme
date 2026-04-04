@@ -361,6 +361,28 @@ Always read this file before making any future changes.
 - Added query-flag based success messages after redirect.
 - Result: Reload no longer resubmits previous form action or duplicates requests.
 
+## Implemented: Phase 3 Status Workflow Upgrade
+- Replaced old statuses with:
+	- `pending` (default after submission)
+	- `processing`
+	- `approved`
+	- `declined`
+	- `in_need`
+- Admin decision model in `Admin Requests`:
+	- Approve
+	- Declined (requires reason; reason shown to client)
+	- In Need (requires needs list)
+- `In Need` behavior:
+	- Admin writes needs item-by-item (dynamic field expansion while typing).
+	- Client sees needs checklist in dashboard overview.
+	- Client can submit partial completion; unchecked items remain pending.
+	- When all needs are checked, request auto-moves to `processing`.
+- `Declined` behavior:
+	- Client sees decline reason in dashboard.
+	- Client can edit and re-submit same request (updates existing request, no duplicate new request).
+- Notification integration:
+	- Status change updates continue to notify client in dashboard.
+
 
 بياناتى 
 Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions

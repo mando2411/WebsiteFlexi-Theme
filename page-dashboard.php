@@ -37,9 +37,11 @@ if (!in_array($initial_tab, $allowed_dashboard_tabs, true)) {
 }
 
 $request_status_labels = array(
-    'submitted' => 'Submitted',
-    'in_review' => 'In Review',
-    'completed' => 'Completed',
+    'pending' => 'Pending',
+    'processing' => 'Processing',
+    'approved' => 'Approved',
+    'declined' => 'Declined',
+    'in_need' => 'In Need',
 );
 
 $service_catalog = array(
@@ -87,11 +89,22 @@ if (isset($_GET['project_request_submitted']) && '1' === sanitize_text_field(wp_
     $form_success = 'Your project request has been submitted successfully. Our team will review it carefully.';
 }
 
+if (isset($_GET['project_request_resubmitted']) && '1' === sanitize_text_field(wp_unslash($_GET['project_request_resubmitted']))) {
+    $form_success = 'Your request was re-submitted successfully and moved to Pending.';
+}
+
+if (isset($_GET['needs_updated']) && '1' === sanitize_text_field(wp_unslash($_GET['needs_updated']))) {
+    $form_success = 'Needs update has been saved.';
+}
+
 if (isset($_GET['admin_request_updated']) && '1' === sanitize_text_field(wp_unslash($_GET['admin_request_updated']))) {
     $admin_form_success = 'Request updated successfully. Changes are now saved.';
 }
 
 $client_status_notifications = array();
+
+$declined_requests = array();
+$in_need_requests = array();
 
 $admin_selected_request_id = 0;
 if ($is_admin_user && isset($_GET['request_id'])) {
@@ -123,6 +136,8 @@ $admin_business_type = '';
 $admin_legal_status = '';
 $admin_needs_full_service = false;
 $admin_full_goals = '';
+$admin_decline_reason = '';
+$admin_need_fields = array('');
 $admin_service_items = array(
     array(
         'service' => '',
@@ -130,7 +145,77 @@ $admin_service_items = array(
         'description' => '',
     ),
 );
-$admin_request_status = 'submitted';
+$admin_request_status = 'pending';
+
+$client_edit_request_id = isset($_GET['edit_request']) ? absint($_GET['edit_request']) : 0;
+$client_edit_request = null;
+
+if ($client_edit_request_id > 0) {
+    $client_edit_request = get_post($client_edit_request_id);
+
+    if ($client_edit_request && 'wf_project_request' === $client_edit_request->post_type && (int) $client_edit_request->post_author === get_current_user_id()) {
+        $about_business = (string) $client_edit_request->post_content;
+        $business_type = (string) get_post_meta($client_edit_request->ID, 'wf_business_type', true);
+        $legal_status = (string) get_post_meta($client_edit_request->ID, 'wf_legal_status', true);
+        $needs_full_service = 'yes' === (string) get_post_meta($client_edit_request->ID, 'wf_needs_full_service', true);
+        $full_goals = (string) get_post_meta($client_edit_request->ID, 'wf_full_goals', true);
+
+        $stored_client_items = get_post_meta($client_edit_request->ID, 'wf_service_items', true);
+        if (is_array($stored_client_items) && !empty($stored_client_items)) {
+            $service_items = $stored_client_items;
+        }
+
+        $initial_tab = 'tab-projects';
+    } else {
+        $client_edit_request = null;
+    }
+}
+
+if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_apply_needs'])) {
+    $initial_tab = 'tab-overview';
+
+    if (!isset($_POST['website_flexi_apply_needs_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_apply_needs_nonce'])), 'website_flexi_apply_needs_action')) {
+        $form_errors[] = 'Security check failed while updating needs.';
+    } else {
+        $needs_request_id = isset($_POST['needs_request_id']) ? absint($_POST['needs_request_id']) : 0;
+        $needs_request = $needs_request_id ? get_post($needs_request_id) : null;
+
+        if (!$needs_request || 'wf_project_request' !== $needs_request->post_type || (int) $needs_request->post_author !== get_current_user_id()) {
+            $form_errors[] = 'Invalid request selected for needs update.';
+        } else {
+            $stored_needs = get_post_meta($needs_request_id, 'wf_request_needs', true);
+            $stored_needs = is_array($stored_needs) ? $stored_needs : array();
+            $done_indexes = isset($_POST['done_needs']) && is_array($_POST['done_needs']) ? array_map('absint', $_POST['done_needs']) : array();
+
+            $all_done = true;
+            foreach ($stored_needs as $need_index => $need_item) {
+                $stored_needs[$need_index]['done'] = in_array((int) $need_index, $done_indexes, true);
+                if (empty($stored_needs[$need_index]['done'])) {
+                    $all_done = false;
+                }
+            }
+
+            update_post_meta($needs_request_id, 'wf_request_needs', $stored_needs);
+
+            if (!empty($stored_needs) && $all_done) {
+                update_post_meta($needs_request_id, 'wf_request_status', 'processing');
+                update_post_meta($needs_request_id, 'wf_status_notification', 'unread');
+                update_post_meta($needs_request_id, 'wf_status_changed_at', wp_date('Y-m-d H:i:s'));
+            }
+
+            wp_safe_redirect(
+                add_query_arg(
+                    array(
+                        'dashboard_tab' => 'tab-overview',
+                        'needs_updated' => '1',
+                    ),
+                    website_flexi_get_dashboard_url()
+                ) . '#tab-overview'
+            );
+            exit;
+        }
+    }
+}
 
 if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_project_submit'])) {
     $initial_tab = 'tab-projects';
@@ -211,16 +296,35 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_project
     }
 
     if (empty($form_errors)) {
-        $request_id = wp_insert_post(
-            array(
-                'post_type'    => 'wf_project_request',
-                'post_status'  => 'publish',
-                'post_title'   => 'Project Request - ' . $current_user->display_name . ' - ' . wp_date('Y-m-d H:i'),
-                'post_content' => $about_business,
-                'post_author'  => get_current_user_id(),
-            ),
-            true
-        );
+        $resubmit_request_id = isset($_POST['resubmit_request_id']) ? absint($_POST['resubmit_request_id']) : 0;
+        $is_resubmit = false;
+
+        if ($resubmit_request_id > 0) {
+            $existing_request = get_post($resubmit_request_id);
+            if ($existing_request && 'wf_project_request' === $existing_request->post_type && (int) $existing_request->post_author === get_current_user_id()) {
+                $request_id = wp_update_post(
+                    array(
+                        'ID'           => $existing_request->ID,
+                        'post_content' => $about_business,
+                    ),
+                    true
+                );
+                $is_resubmit = true;
+            } else {
+                $request_id = new WP_Error('invalid_resubmit', 'Invalid request selected for re-submit.');
+            }
+        } else {
+            $request_id = wp_insert_post(
+                array(
+                    'post_type'    => 'wf_project_request',
+                    'post_status'  => 'publish',
+                    'post_title'   => 'Project Request - ' . $current_user->display_name . ' - ' . wp_date('Y-m-d H:i'),
+                    'post_content' => $about_business,
+                    'post_author'  => get_current_user_id(),
+                ),
+                true
+            );
+        }
 
         if (is_wp_error($request_id)) {
             $form_errors[] = $request_id->get_error_message();
@@ -230,13 +334,16 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_project
             update_post_meta($request_id, 'wf_needs_full_service', $needs_full_service ? 'yes' : 'no');
             update_post_meta($request_id, 'wf_full_goals', $full_goals);
             update_post_meta($request_id, 'wf_service_items', $service_items);
-            update_post_meta($request_id, 'wf_request_status', 'submitted');
+            update_post_meta($request_id, 'wf_request_status', 'pending');
+            update_post_meta($request_id, 'wf_decline_reason', '');
+            update_post_meta($request_id, 'wf_request_needs', array());
 
             wp_safe_redirect(
                 add_query_arg(
                     array(
                         'dashboard_tab' => 'tab-projects',
-                        'project_request_submitted' => '1',
+                        'project_request_submitted' => $is_resubmit ? '0' : '1',
+                        'project_request_resubmitted' => $is_resubmit ? '1' : '0',
                     ),
                     website_flexi_get_dashboard_url()
                 ) . '#tab-projects'
@@ -265,7 +372,18 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
     $admin_legal_status = isset($_POST['admin_legal_status']) ? sanitize_text_field(wp_unslash($_POST['admin_legal_status'])) : '';
     $admin_needs_full_service = isset($_POST['admin_needs_full_service']);
     $admin_full_goals = isset($_POST['admin_full_goals']) ? sanitize_textarea_field(wp_unslash($_POST['admin_full_goals'])) : '';
-    $admin_request_status = isset($_POST['admin_request_status']) ? sanitize_key(wp_unslash($_POST['admin_request_status'])) : 'submitted';
+    $admin_request_status = isset($_POST['admin_request_status']) ? sanitize_key(wp_unslash($_POST['admin_request_status'])) : 'pending';
+    $admin_decline_reason = isset($_POST['admin_decline_reason']) ? sanitize_textarea_field(wp_unslash($_POST['admin_decline_reason'])) : '';
+
+    $raw_admin_needs = isset($_POST['admin_need_fields']) && is_array($_POST['admin_need_fields']) ? $_POST['admin_need_fields'] : array();
+    $admin_need_fields = array();
+
+    foreach ($raw_admin_needs as $need_field) {
+        $clean_need = sanitize_text_field(wp_unslash($need_field));
+        if ('' !== $clean_need) {
+            $admin_need_fields[] = $clean_need;
+        }
+    }
 
     if (!isset($request_status_labels[$admin_request_status])) {
         $admin_request_status = 'submitted';
@@ -306,6 +424,14 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
         $admin_form_errors[] = 'At least one service line is required.';
     }
 
+    if ('declined' === $admin_request_status && '' === $admin_decline_reason) {
+        $admin_form_errors[] = 'Please provide a reason for Declined status.';
+    }
+
+    if ('in_need' === $admin_request_status && empty($admin_need_fields)) {
+        $admin_form_errors[] = 'Please add at least one need item for In Need status.';
+    }
+
     if (empty($admin_form_errors) && $admin_selected_request) {
         $previous_status = (string) get_post_meta($admin_selected_request->ID, 'wf_request_status', true);
 
@@ -322,6 +448,27 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
         update_post_meta($admin_selected_request->ID, 'wf_full_goals', $admin_full_goals);
         update_post_meta($admin_selected_request->ID, 'wf_service_items', $admin_service_items);
         update_post_meta($admin_selected_request->ID, 'wf_request_status', $admin_request_status);
+
+        if ('declined' === $admin_request_status) {
+            update_post_meta($admin_selected_request->ID, 'wf_decline_reason', $admin_decline_reason);
+            update_post_meta($admin_selected_request->ID, 'wf_request_needs', array());
+        } elseif ('in_need' === $admin_request_status) {
+            $needs_payload = array();
+            foreach ($admin_need_fields as $need_text) {
+                $needs_payload[] = array(
+                    'text' => $need_text,
+                    'done' => false,
+                );
+            }
+
+            update_post_meta($admin_selected_request->ID, 'wf_request_needs', $needs_payload);
+            update_post_meta($admin_selected_request->ID, 'wf_decline_reason', '');
+        } else {
+            update_post_meta($admin_selected_request->ID, 'wf_decline_reason', '');
+            if ('processing' !== $admin_request_status) {
+                update_post_meta($admin_selected_request->ID, 'wf_request_needs', array());
+            }
+        }
 
         if ($previous_status !== $admin_request_status) {
             update_post_meta($admin_selected_request->ID, 'wf_status_notification', 'unread');
@@ -354,12 +501,26 @@ if ($is_admin_user && $admin_selected_request_id > 0) {
         $admin_request_status = (string) get_post_meta($admin_selected_request->ID, 'wf_request_status', true);
 
         if (!isset($request_status_labels[$admin_request_status])) {
-            $admin_request_status = 'submitted';
+            $admin_request_status = 'pending';
         }
 
         $stored_items = get_post_meta($admin_selected_request->ID, 'wf_service_items', true);
         if (is_array($stored_items) && !empty($stored_items)) {
             $admin_service_items = $stored_items;
+        }
+
+        $admin_decline_reason = (string) get_post_meta($admin_selected_request->ID, 'wf_decline_reason', true);
+        $stored_needs_for_admin = get_post_meta($admin_selected_request->ID, 'wf_request_needs', true);
+        if (is_array($stored_needs_for_admin) && !empty($stored_needs_for_admin)) {
+            $admin_need_fields = array();
+            foreach ($stored_needs_for_admin as $need_item) {
+                if (isset($need_item['text']) && '' !== $need_item['text']) {
+                    $admin_need_fields[] = (string) $need_item['text'];
+                }
+            }
+            if (empty($admin_need_fields)) {
+                $admin_need_fields = array('');
+            }
         }
     }
 }
@@ -388,15 +549,34 @@ foreach ($user_request_ids as $request_id) {
     $items = get_post_meta($request_id, 'wf_service_items', true);
     $items_count = is_array($items) ? count($items) : 0;
     $notification_flag = (string) get_post_meta($request_id, 'wf_status_notification', true);
+    $decline_reason = (string) get_post_meta($request_id, 'wf_decline_reason', true);
+    $needs_items = get_post_meta($request_id, 'wf_request_needs', true);
+    $needs_items = is_array($needs_items) ? $needs_items : array();
 
     $active_services_count += $items_count;
 
-    if ('completed' === $status) {
+    if ('approved' === $status) {
         $completed_count++;
-    } elseif ('in_review' === $status) {
+    } elseif ('processing' === $status) {
         $in_review_count++;
     } else {
         $submitted_count++;
+    }
+
+    if ('declined' === $status) {
+        $declined_requests[] = array(
+            'id' => $request_id,
+            'title' => get_the_title($request_id),
+            'reason' => $decline_reason,
+        );
+    }
+
+    if ('in_need' === $status && !empty($needs_items)) {
+        $in_need_requests[] = array(
+            'id' => $request_id,
+            'title' => get_the_title($request_id),
+            'needs' => $needs_items,
+        );
     }
 
     if ('unread' === $notification_flag) {
@@ -479,9 +659,9 @@ get_header();
                 <section class="dashboard-panel is-active glass-card" id="tab-overview">
                     <h2>Dashboard</h2>
                     <div class="dashboard-kpis">
-                        <article><strong><?php echo esc_html((string) $submitted_count); ?></strong><span>Submitted Requests</span></article>
-                        <article><strong><?php echo esc_html((string) $in_review_count); ?></strong><span>In Review</span></article>
-                        <article><strong><?php echo esc_html((string) $completed_count); ?></strong><span>Completed</span></article>
+                        <article><strong><?php echo esc_html((string) $submitted_count); ?></strong><span>Pending / In Need</span></article>
+                        <article><strong><?php echo esc_html((string) $in_review_count); ?></strong><span>Processing</span></article>
+                        <article><strong><?php echo esc_html((string) $completed_count); ?></strong><span>Approved</span></article>
                         <article><strong><?php echo esc_html((string) $active_services_count); ?></strong><span>Active Service Lines</span></article>
                     </div>
 
@@ -515,12 +695,60 @@ get_header();
                                 <?php $request_status = (string) get_post_meta(get_the_ID(), 'wf_request_status', true); ?>
                                 <li>
                                     <span><?php the_title(); ?></span>
-                                    <span><?php echo esc_html('Status: ' . ($request_status ? ucfirst(str_replace('_', ' ', $request_status)) : 'Submitted')); ?></span>
+                                    <span><?php echo esc_html('Status: ' . (isset($request_status_labels[$request_status]) ? $request_status_labels[$request_status] : 'Pending')); ?></span>
                                 </li>
                             <?php endwhile; ?>
                         </ul>
                     <?php else : ?>
                         <p>No project requests yet. Start by clicking "Apply for a New Project".</p>
+                    <?php endif; ?>
+
+                    <?php if (!empty($declined_requests)) : ?>
+                        <div class="status-notifications">
+                            <h3>Declined Requests</h3>
+                            <ul class="dashboard-list dashboard-list-compact">
+                                <?php foreach ($declined_requests as $declined_request) : ?>
+                                    <?php
+                                    $resubmit_link = add_query_arg(
+                                        array(
+                                            'dashboard_tab' => 'tab-projects',
+                                            'edit_request' => $declined_request['id'],
+                                        ),
+                                        website_flexi_get_dashboard_url()
+                                    ) . '#tab-projects';
+                                    ?>
+                                    <li>
+                                        <strong><?php echo esc_html($declined_request['title']); ?></strong>
+                                        <span><?php echo esc_html('Reason: ' . ($declined_request['reason'] ? $declined_request['reason'] : 'No reason provided.')); ?></span>
+                                        <a href="<?php echo esc_url($resubmit_link); ?>">Edit and Re-Submit</a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($in_need_requests)) : ?>
+                        <div class="status-notifications">
+                            <h3>Requests In Need</h3>
+                            <?php foreach ($in_need_requests as $needs_request) : ?>
+                                <form class="project-needs-form" method="post" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-overview">
+                                    <?php wp_nonce_field('website_flexi_apply_needs_action', 'website_flexi_apply_needs_nonce'); ?>
+                                    <input type="hidden" name="needs_request_id" value="<?php echo esc_attr((string) $needs_request['id']); ?>" />
+
+                                    <p><strong><?php echo esc_html($needs_request['title']); ?></strong></p>
+                                    <?php foreach ($needs_request['needs'] as $need_index => $need_item) : ?>
+                                        <label class="need-item">
+                                            <input type="checkbox" name="done_needs[]" value="<?php echo esc_attr((string) $need_index); ?>" <?php checked(!empty($need_item['done'])); ?> />
+                                            <span><?php echo esc_html(isset($need_item['text']) ? $need_item['text'] : ''); ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+
+                                    <div class="dashboard-actions">
+                                        <button class="btn btn-primary" type="submit" name="website_flexi_apply_needs" value="1">Apply Needs Update</button>
+                                    </div>
+                                </form>
+                            <?php endforeach; ?>
+                        </div>
                     <?php endif; ?>
                 </section>
 
@@ -542,6 +770,9 @@ get_header();
 
                     <form class="project-request-form" method="post" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-projects">
                         <?php wp_nonce_field('website_flexi_project_action', 'website_flexi_project_nonce'); ?>
+                        <?php if ($client_edit_request) : ?>
+                            <input type="hidden" name="resubmit_request_id" value="<?php echo esc_attr((string) $client_edit_request->ID); ?>" />
+                        <?php endif; ?>
 
                         <p>
                             <label for="about_business">About You / Your Business</label>
@@ -613,7 +844,7 @@ get_header();
 
                         <div class="dashboard-actions">
                             <button class="btn btn-secondary" type="button" data-add-service-item>Add another service</button>
-                            <button class="btn btn-primary" type="submit" name="website_flexi_project_submit" value="1">Submit Request</button>
+                            <button class="btn btn-primary" type="submit" name="website_flexi_project_submit" value="1"><?php echo $client_edit_request ? 'Re-Submit Request' : 'Submit Request'; ?></button>
                         </div>
                     </form>
 
@@ -683,9 +914,9 @@ get_header();
                 <section class="dashboard-panel glass-card" id="tab-stats">
                     <h2>Statistics</h2>
                     <ul class="dashboard-list dashboard-list-compact">
-                        <li><strong>Total Submitted Requests:</strong> <span><?php echo esc_html((string) $submitted_count); ?></span></li>
-                        <li><strong>Total In Review:</strong> <span><?php echo esc_html((string) $in_review_count); ?></span></li>
-                        <li><strong>Total Completed:</strong> <span><?php echo esc_html((string) $completed_count); ?></span></li>
+                        <li><strong>Total Pending / In Need:</strong> <span><?php echo esc_html((string) $submitted_count); ?></span></li>
+                        <li><strong>Total Processing:</strong> <span><?php echo esc_html((string) $in_review_count); ?></span></li>
+                        <li><strong>Total Approved:</strong> <span><?php echo esc_html((string) $completed_count); ?></span></li>
                         <li><strong>Total Service Lines:</strong> <span><?php echo esc_html((string) $active_services_count); ?></span></li>
                     </ul>
                 </section>
@@ -765,13 +996,29 @@ get_header();
                                 <input type="hidden" name="admin_request_id" value="<?php echo esc_attr((string) $admin_selected_request->ID); ?>" />
 
                                 <p>
-                                    <label for="admin_request_status">Request Status</label>
+                                    <label for="admin_request_status">Admin Decision</label>
                                     <select id="admin_request_status" name="admin_request_status" required>
-                                        <?php foreach ($request_status_labels as $status_key => $status_label) : ?>
-                                            <option value="<?php echo esc_attr($status_key); ?>" <?php selected($admin_request_status, $status_key); ?>><?php echo esc_html($status_label); ?></option>
-                                        <?php endforeach; ?>
+                                        <option value="pending" <?php selected($admin_request_status, 'pending'); ?>>Pending</option>
+                                        <option value="approved" <?php selected($admin_request_status, 'approved'); ?>>Approve</option>
+                                        <option value="declined" <?php selected($admin_request_status, 'declined'); ?>>Declined</option>
+                                        <option value="in_need" <?php selected($admin_request_status, 'in_need'); ?>>In Need</option>
                                     </select>
                                 </p>
+
+                                <p class="admin-decline-reason <?php echo 'declined' === $admin_request_status ? 'is-visible' : ''; ?>" data-admin-decline-reason>
+                                    <label for="admin_decline_reason">Decline Reason (shown to client)</label>
+                                    <textarea id="admin_decline_reason" name="admin_decline_reason" rows="3"><?php echo esc_textarea($admin_decline_reason); ?></textarea>
+                                </p>
+
+                                <div class="admin-needs-block <?php echo 'in_need' === $admin_request_status ? 'is-visible' : ''; ?>" data-admin-needs-block>
+                                    <label>Needs List (shown to client)</label>
+                                    <div class="needs-list" data-admin-needs-container>
+                                        <?php foreach ($admin_need_fields as $need_field_value) : ?>
+                                            <input type="text" name="admin_need_fields[]" value="<?php echo esc_attr($need_field_value); ?>" placeholder="Add one need item" />
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <p class="project-request-hint">As you fill the last field, a new one appears automatically.</p>
+                                </div>
 
                                 <p>
                                     <label for="admin_about_business">About Business</label>
