@@ -323,7 +323,7 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
 if ($is_admin_user && $admin_selected_request_id > 0) {
     $admin_selected_request = get_post($admin_selected_request_id);
 
-    if ($admin_selected_request && 'wf_project_request' === $admin_selected_request->post_type && 'POST' !== $_SERVER['REQUEST_METHOD']) {
+    if ($admin_selected_request && 'wf_project_request' === $admin_selected_request->post_type) {
         $admin_about_business = (string) $admin_selected_request->post_content;
         $admin_business_type = (string) get_post_meta($admin_selected_request->ID, 'wf_business_type', true);
         $admin_legal_status = (string) get_post_meta($admin_selected_request->ID, 'wf_legal_status', true);
