@@ -39,7 +39,17 @@ Always read this file before making any future changes.
 - Path: header.php
 	Purpose: Shared page header and navigation.
 	Key symbols: wp_head, wp_nav_menu, wp_body_open, .auth-actions links.
-	Notes: Includes About/Contact links and Login/Sign Up actions.
+	Notes: Includes About/Contact links and Login/Sign Up actions with page slug fallback.
+
+- Path: page-login.php
+	Purpose: Custom WordPress-compatible login page template.
+	Key symbols: Template Name: Login Page, wp_login_form.
+	Notes: Uses built-in WordPress authentication and redirects to homepage.
+
+- Path: page-signup.php
+	Purpose: Custom WordPress-compatible signup page template.
+	Key symbols: Template Name: Signup Page, wp_create_user, wp_nonce_field.
+	Notes: Handles secure registration with validation and users_can_register check.
 
 - Path: footer.php
 	Purpose: Shared footer with copyright and wp_footer.
@@ -59,7 +69,7 @@ Always read this file before making any future changes.
 - Path: assets/css/main.css
 	Purpose: Main visual system and responsive styling.
 	Key symbols: CSS variables, .hero-glow, .signal-strip, .glass-card, .reveal-stagger.
-	Notes: Controls futuristic style, gradients, motion, and responsive layout.
+	Notes: Controls futuristic style, gradients, motion, responsive layout, and auth form styles.
 
 - Path: assets/js/main.js
 	Purpose: Scroll reveal animation behavior.
@@ -95,7 +105,12 @@ Always read this file before making any future changes.
 - Feature/Area: Header links and auth buttons
 	Main file: header.php
 	Related files: functions.php, assets/css/main.css
-	Entry point: static .nav-menu links, wp_login_url, wp_registration_url
+	Entry point: static .nav-menu links, login/signup slug lookup with WP fallback
+
+- Feature/Area: Login and signup pages
+	Main file: page-login.php
+	Related files: page-signup.php, header.php, assets/css/main.css
+	Entry point: Page template assignment in WordPress editor
 
 - Feature/Area: Footer and legal text
 	Main file: footer.php
@@ -125,6 +140,11 @@ Always read this file before making any future changes.
 	Change: Updated header to include About, Contact Us, Login, and Sign Up actions.
 	Files touched: header.php, functions.php, assets/css/main.css
 	Why: Improve top navigation and make user actions immediately accessible.
+
+- Date: 2026-04-04
+	Change: Created WordPress-compatible custom login and signup page templates.
+	Files touched: page-login.php, page-signup.php, header.php, assets/css/main.css
+	Why: Provide branded auth pages while keeping native WP compatibility and security.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.

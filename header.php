@@ -2,6 +2,12 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+$login_page  = get_page_by_path('login');
+$signup_page = get_page_by_path('signup');
+
+$login_url  = $login_page ? get_permalink($login_page) : wp_login_url();
+$signup_url = $signup_page ? get_permalink($signup_page) : wp_registration_url();
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -26,8 +32,8 @@ if (!defined('ABSPATH')) {
                 </ul>
             </nav>
             <div class="auth-actions" aria-label="Authentication actions">
-                <a class="btn btn-secondary btn-auth" href="<?php echo esc_url(wp_login_url()); ?>">Login</a>
-                <a class="btn btn-primary btn-auth" href="<?php echo esc_url(wp_registration_url()); ?>">Sign Up</a>
+                <a class="btn btn-secondary btn-auth" href="<?php echo esc_url($login_url); ?>">Login</a>
+                <a class="btn btn-primary btn-auth" href="<?php echo esc_url($signup_url); ?>">Sign Up</a>
             </div>
         </div>
     </div>
