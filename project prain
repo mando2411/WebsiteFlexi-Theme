@@ -34,7 +34,7 @@ Always read this file before making any future changes.
 - Path: functions.php
 	Purpose: Theme setup and assets enqueue.
 	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets, website_flexi_get_login_url, website_flexi_get_signup_url, website_flexi_redirect_default_login_page, website_flexi_hide_admin_bar_for_non_admins.
-	Notes: Registers menu, loads CSS/JS, handles auth routing, and hides frontend admin bar for non-admin users.
+	Notes: Registers menu, loads CSS/JS with cache-busting filemtime versions, handles auth routing, and hides frontend admin bar for non-admin users.
 
 - Path: header.php
 	Purpose: Shared page header and navigation.
@@ -69,7 +69,7 @@ Always read this file before making any future changes.
 - Path: assets/css/main.css
 	Purpose: Main visual system and responsive styling.
 	Key symbols: CSS variables, .menu-toggle, .header-tools.is-open, .hero-glow, .signal-strip, .glass-card, .reveal-stagger.
-	Notes: Controls futuristic style plus full responsive behavior; includes polished WP login form/button styling and mobile header dropdown layout fixes.
+	Notes: Controls futuristic style plus full responsive behavior; includes high-specificity hotfix styles for login form fields/buttons and header layout conflicts.
 
 - Path: assets/js/main.js
 	Purpose: Scroll reveal animation behavior.
@@ -195,6 +195,11 @@ Always read this file before making any future changes.
 	Change: Fixed broken header layout and refined login/signup form visual styles on desktop and mobile.
 	Files touched: assets/css/main.css, assets/js/main.js, project prain
 	Why: Remove unstyled default WP form look and stabilize responsive header behavior.
+
+- Date: 2026-04-04
+	Change: Added cache-busting asset versions and CSS hotfix layer to override style conflicts.
+	Files touched: functions.php, assets/css/main.css, project prain
+	Why: Ensure latest styles load immediately and prevent plugin/theme CSS override issues.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.

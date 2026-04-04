@@ -17,6 +17,11 @@ function website_flexi_theme_setup() {
 add_action('after_setup_theme', 'website_flexi_theme_setup');
 
 function website_flexi_enqueue_assets() {
+    $style_path = get_template_directory() . '/assets/css/main.css';
+    $script_path = get_template_directory() . '/assets/js/main.js';
+    $style_ver = file_exists($style_path) ? (string) filemtime($style_path) : '1.0.0';
+    $script_ver = file_exists($script_path) ? (string) filemtime($script_path) : '1.0.0';
+
     wp_enqueue_style(
         'website-flexi-google-fonts',
         'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap',
@@ -28,14 +33,14 @@ function website_flexi_enqueue_assets() {
         'website-flexi-main-style',
         get_template_directory_uri() . '/assets/css/main.css',
         array('website-flexi-google-fonts'),
-        '1.0.0'
+        $style_ver
     );
 
     wp_enqueue_script(
         'website-flexi-main-script',
         get_template_directory_uri() . '/assets/js/main.js',
         array(),
-        '1.0.0',
+        $script_ver,
         true
     );
 }
