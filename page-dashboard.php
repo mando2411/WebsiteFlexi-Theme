@@ -21,6 +21,28 @@ if (!is_user_logged_in()) {
 get_header();
 
 $current_user = wp_get_current_user();
+$is_admin_user = current_user_can('manage_options');
+
+$allowed_dashboard_tabs = array(
+    'tab-overview',
+    'tab-projects',
+    'tab-achievements',
+    'tab-assets',
+    'tab-stats',
+    'tab-account',
+    'tab-admin-requests',
+);
+
+$initial_tab = isset($_GET['dashboard_tab']) ? sanitize_key(wp_unslash($_GET['dashboard_tab'])) : 'tab-overview';
+if (!in_array($initial_tab, $allowed_dashboard_tabs, true)) {
+    $initial_tab = 'tab-overview';
+}
+
+$request_status_labels = array(
+    'submitted' => 'Submitted',
+    'in_review' => 'In Review',
+    'completed' => 'Completed',
+);
 
 $service_catalog = array(
     'Facebook',
@@ -60,7 +82,32 @@ $service_items = array(
     ),
 );
 
+$admin_form_errors = array();
+$admin_form_success = '';
+
+$admin_selected_request_id = 0;
+if ($is_admin_user && isset($_GET['request_id'])) {
+    $admin_selected_request_id = absint($_GET['request_id']);
+}
+
+$admin_selected_request = null;
+$admin_about_business = '';
+$admin_business_type = '';
+$admin_legal_status = '';
+$admin_needs_full_service = false;
+$admin_full_goals = '';
+$admin_service_items = array(
+    array(
+        'service' => '',
+        'actions' => array(),
+        'description' => '',
+    ),
+);
+$admin_request_status = 'submitted';
+
 if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_project_submit'])) {
+    $initial_tab = 'tab-projects';
+
     if (!isset($_POST['website_flexi_project_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_project_nonce'])), 'website_flexi_project_action')) {
         $form_errors[] = 'Security check failed. Please refresh and try again.';
     }
@@ -176,6 +223,111 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_project
     }
 }
 
+if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_request_update']) && $is_admin_user) {
+    $initial_tab = 'tab-admin-requests';
+
+    if (!isset($_POST['website_flexi_admin_request_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_admin_request_nonce'])), 'website_flexi_admin_request_action')) {
+        $admin_form_errors[] = 'Security check failed. Please refresh and try again.';
+    }
+
+    $admin_selected_request_id = isset($_POST['admin_request_id']) ? absint($_POST['admin_request_id']) : 0;
+    $admin_selected_request = $admin_selected_request_id ? get_post($admin_selected_request_id) : null;
+
+    if (!$admin_selected_request || 'wf_project_request' !== $admin_selected_request->post_type) {
+        $admin_form_errors[] = 'Invalid request selected.';
+    }
+
+    $admin_about_business = isset($_POST['admin_about_business']) ? sanitize_textarea_field(wp_unslash($_POST['admin_about_business'])) : '';
+    $admin_business_type = isset($_POST['admin_business_type']) ? sanitize_text_field(wp_unslash($_POST['admin_business_type'])) : '';
+    $admin_legal_status = isset($_POST['admin_legal_status']) ? sanitize_text_field(wp_unslash($_POST['admin_legal_status'])) : '';
+    $admin_needs_full_service = isset($_POST['admin_needs_full_service']);
+    $admin_full_goals = isset($_POST['admin_full_goals']) ? sanitize_textarea_field(wp_unslash($_POST['admin_full_goals'])) : '';
+    $admin_request_status = isset($_POST['admin_request_status']) ? sanitize_key(wp_unslash($_POST['admin_request_status'])) : 'submitted';
+
+    if (!isset($request_status_labels[$admin_request_status])) {
+        $admin_request_status = 'submitted';
+    }
+
+    $raw_admin_items = isset($_POST['admin_service_items']) && is_array($_POST['admin_service_items']) ? $_POST['admin_service_items'] : array();
+    $admin_service_items = array();
+
+    foreach ($raw_admin_items as $raw_item) {
+        if (!is_array($raw_item)) {
+            continue;
+        }
+
+        $service = isset($raw_item['service']) ? sanitize_text_field(wp_unslash($raw_item['service'])) : '';
+        $description = isset($raw_item['description']) ? sanitize_textarea_field(wp_unslash($raw_item['description'])) : '';
+        $actions_raw = isset($raw_item['actions']) && is_array($raw_item['actions']) ? $raw_item['actions'] : array();
+        $actions = array();
+
+        foreach ($actions_raw as $action_item) {
+            $clean_action = sanitize_text_field(wp_unslash($action_item));
+            if (in_array($clean_action, $service_actions, true)) {
+                $actions[] = $clean_action;
+            }
+        }
+
+        if ('' === $service && '' === $description && empty($actions)) {
+            continue;
+        }
+
+        $admin_service_items[] = array(
+            'service' => in_array($service, $service_catalog, true) ? $service : '',
+            'actions' => $actions,
+            'description' => $description,
+        );
+    }
+
+    if (empty($admin_service_items)) {
+        $admin_form_errors[] = 'At least one service line is required.';
+    }
+
+    if (empty($admin_form_errors) && $admin_selected_request) {
+        wp_update_post(
+            array(
+                'ID' => $admin_selected_request->ID,
+                'post_content' => $admin_about_business,
+            )
+        );
+
+        update_post_meta($admin_selected_request->ID, 'wf_business_type', $admin_business_type);
+        update_post_meta($admin_selected_request->ID, 'wf_legal_status', $admin_legal_status);
+        update_post_meta($admin_selected_request->ID, 'wf_needs_full_service', $admin_needs_full_service ? 'yes' : 'no');
+        update_post_meta($admin_selected_request->ID, 'wf_full_goals', $admin_full_goals);
+        update_post_meta($admin_selected_request->ID, 'wf_service_items', $admin_service_items);
+        update_post_meta($admin_selected_request->ID, 'wf_request_status', $admin_request_status);
+
+        $admin_form_success = 'Request updated successfully. Changes are now saved.';
+    }
+}
+
+if ($is_admin_user && $admin_selected_request_id > 0) {
+    $admin_selected_request = get_post($admin_selected_request_id);
+
+    if ($admin_selected_request && 'wf_project_request' === $admin_selected_request->post_type && 'POST' !== $_SERVER['REQUEST_METHOD']) {
+        $admin_about_business = (string) $admin_selected_request->post_content;
+        $admin_business_type = (string) get_post_meta($admin_selected_request->ID, 'wf_business_type', true);
+        $admin_legal_status = (string) get_post_meta($admin_selected_request->ID, 'wf_legal_status', true);
+        $admin_needs_full_service = 'yes' === (string) get_post_meta($admin_selected_request->ID, 'wf_needs_full_service', true);
+        $admin_full_goals = (string) get_post_meta($admin_selected_request->ID, 'wf_full_goals', true);
+        $admin_request_status = (string) get_post_meta($admin_selected_request->ID, 'wf_request_status', true);
+
+        if (!isset($request_status_labels[$admin_request_status])) {
+            $admin_request_status = 'submitted';
+        }
+
+        $stored_items = get_post_meta($admin_selected_request->ID, 'wf_service_items', true);
+        if (is_array($stored_items) && !empty($stored_items)) {
+            $admin_service_items = $stored_items;
+        }
+    }
+}
+
+if ($is_admin_user && (isset($_POST['website_flexi_admin_request_update']) || isset($_GET['request_id']))) {
+    $initial_tab = 'tab-admin-requests';
+}
+
 $user_request_ids = get_posts(
     array(
         'post_type'      => 'wf_project_request',
@@ -235,6 +387,17 @@ $assets_query = new WP_Query(
         'posts_per_page' => 8,
     )
 );
+
+$admin_requests_query = null;
+if ($is_admin_user) {
+    $admin_requests_query = new WP_Query(
+        array(
+            'post_type'      => 'wf_project_request',
+            'post_status'    => 'publish',
+            'posts_per_page' => 25,
+        )
+    );
+}
 ?>
 <section class="dashboard-page reveal">
     <div class="container">
@@ -252,10 +415,13 @@ $assets_query = new WP_Query(
                 <button class="dashboard-tab" type="button" data-tab-target="tab-assets">Assets</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-stats">Statistics</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-account">Account Details</button>
+                <?php if ($is_admin_user) : ?>
+                    <button class="dashboard-tab" type="button" data-tab-target="tab-admin-requests">Admin Requests</button>
+                <?php endif; ?>
                 <a class="dashboard-tab dashboard-tab-link" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Logout</a>
             </aside>
 
-            <div class="dashboard-panels">
+            <div class="dashboard-panels" data-initial-tab="<?php echo esc_attr($initial_tab); ?>">
                 <section class="dashboard-panel is-active glass-card" id="tab-overview">
                     <h2>Dashboard</h2>
                     <div class="dashboard-kpis">
@@ -464,6 +630,172 @@ $assets_query = new WP_Query(
                         <a class="btn btn-primary" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Logout</a>
                     </div>
                 </section>
+
+                <?php if ($is_admin_user) : ?>
+                    <section class="dashboard-panel glass-card" id="tab-admin-requests">
+                        <h2>Admin Requests Review</h2>
+
+                        <?php if (!empty($admin_form_success)) : ?>
+                            <p class="auth-message success"><?php echo esc_html($admin_form_success); ?></p>
+                        <?php endif; ?>
+
+                        <?php if (!empty($admin_form_errors)) : ?>
+                            <div class="auth-errors" role="alert" aria-live="polite">
+                                <?php foreach ($admin_form_errors as $admin_error) : ?>
+                                    <p><?php echo esc_html($admin_error); ?></p>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($admin_requests_query && $admin_requests_query->have_posts()) : ?>
+                            <ul class="dashboard-list">
+                                <?php while ($admin_requests_query->have_posts()) : $admin_requests_query->the_post(); ?>
+                                    <?php
+                                    $row_status = (string) get_post_meta(get_the_ID(), 'wf_request_status', true);
+                                    $row_status = isset($request_status_labels[$row_status]) ? $request_status_labels[$row_status] : 'Submitted';
+                                    $edit_link = add_query_arg(
+                                        array(
+                                            'dashboard_tab' => 'tab-admin-requests',
+                                            'request_id'    => get_the_ID(),
+                                        ),
+                                        website_flexi_get_dashboard_url()
+                                    ) . '#tab-admin-requests';
+                                    ?>
+                                    <li>
+                                        <span>
+                                            <?php the_title(); ?>
+                                            <small>(<?php echo esc_html(get_the_author_meta('display_name', (int) get_post_field('post_author', get_the_ID()))); ?>)</small>
+                                        </span>
+                                        <span><?php echo esc_html($row_status); ?> | <a href="<?php echo esc_url($edit_link); ?>">Review / Edit</a></span>
+                                    </li>
+                                <?php endwhile; ?>
+                            </ul>
+                        <?php else : ?>
+                            <p>No submitted requests yet.</p>
+                        <?php endif; ?>
+
+                        <?php if ($admin_selected_request && 'wf_project_request' === $admin_selected_request->post_type) : ?>
+                            <hr />
+                            <h3>Edit Request</h3>
+                            <p><strong>Request:</strong> <?php echo esc_html($admin_selected_request->post_title); ?></p>
+
+                            <form class="project-request-form" method="post" action="<?php echo esc_url(add_query_arg(array('dashboard_tab' => 'tab-admin-requests', 'request_id' => $admin_selected_request->ID), website_flexi_get_dashboard_url())); ?>#tab-admin-requests">
+                                <?php wp_nonce_field('website_flexi_admin_request_action', 'website_flexi_admin_request_nonce'); ?>
+                                <input type="hidden" name="admin_request_id" value="<?php echo esc_attr((string) $admin_selected_request->ID); ?>" />
+
+                                <p>
+                                    <label for="admin_request_status">Request Status</label>
+                                    <select id="admin_request_status" name="admin_request_status" required>
+                                        <?php foreach ($request_status_labels as $status_key => $status_label) : ?>
+                                            <option value="<?php echo esc_attr($status_key); ?>" <?php selected($admin_request_status, $status_key); ?>><?php echo esc_html($status_label); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </p>
+
+                                <p>
+                                    <label for="admin_about_business">About Business</label>
+                                    <textarea id="admin_about_business" name="admin_about_business" rows="4" required><?php echo esc_textarea($admin_about_business); ?></textarea>
+                                </p>
+
+                                <div class="project-request-grid">
+                                    <p>
+                                        <label for="admin_business_type">Business Type</label>
+                                        <input type="text" id="admin_business_type" name="admin_business_type" value="<?php echo esc_attr($admin_business_type); ?>" required />
+                                    </p>
+
+                                    <p>
+                                        <label for="admin_legal_status">Legal Status</label>
+                                        <select id="admin_legal_status" name="admin_legal_status" required>
+                                            <option value="">Select status...</option>
+                                            <option value="fully_registered" <?php selected($admin_legal_status, 'fully_registered'); ?>>Commercial register + tax card + licenses</option>
+                                            <option value="partially_registered" <?php selected($admin_legal_status, 'partially_registered'); ?>>Partially registered</option>
+                                            <option value="not_registered" <?php selected($admin_legal_status, 'not_registered'); ?>>Not registered yet</option>
+                                        </select>
+                                    </p>
+                                </div>
+
+                                <p class="full-service-toggle">
+                                    <label>
+                                        <input type="checkbox" name="admin_needs_full_service" value="1" <?php checked($admin_needs_full_service); ?> data-admin-full-service-toggle />
+                                        Enable full-service handling for this request.
+                                    </label>
+                                </p>
+
+                                <p class="full-service-goals <?php echo $admin_needs_full_service ? 'is-visible' : ''; ?>" data-admin-full-service-goals>
+                                    <label for="admin_full_goals">Full Goals and Requirements</label>
+                                    <textarea id="admin_full_goals" name="admin_full_goals" rows="4"><?php echo esc_textarea($admin_full_goals); ?></textarea>
+                                </p>
+
+                                <div class="service-items" data-admin-service-items>
+                                    <?php foreach ($admin_service_items as $admin_index => $admin_service_item) : ?>
+                                        <article class="service-item-card" data-admin-service-item>
+                                            <div class="project-request-grid">
+                                                <p>
+                                                    <label>Service Needed</label>
+                                                    <select name="admin_service_items[<?php echo esc_attr((string) $admin_index); ?>][service]" required>
+                                                        <option value="">Select service...</option>
+                                                        <?php foreach ($service_catalog as $service_name) : ?>
+                                                            <option value="<?php echo esc_attr($service_name); ?>" <?php selected(isset($admin_service_item['service']) ? $admin_service_item['service'] : '', $service_name); ?>><?php echo esc_html($service_name); ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </p>
+
+                                                <p>
+                                                    <label>Actions (multi-select)</label>
+                                                    <select name="admin_service_items[<?php echo esc_attr((string) $admin_index); ?>][actions][]" multiple size="5" required>
+                                                        <?php foreach ($service_actions as $action_name) : ?>
+                                                            <option value="<?php echo esc_attr($action_name); ?>" <?php echo (isset($admin_service_item['actions']) && is_array($admin_service_item['actions']) && in_array($action_name, $admin_service_item['actions'], true)) ? 'selected' : ''; ?>><?php echo esc_html($action_name); ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </p>
+                                            </div>
+
+                                            <p>
+                                                <label>Detailed Description</label>
+                                                <textarea name="admin_service_items[<?php echo esc_attr((string) $admin_index); ?>][description]" rows="4" required><?php echo esc_textarea(isset($admin_service_item['description']) ? $admin_service_item['description'] : ''); ?></textarea>
+                                            </p>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <div class="dashboard-actions">
+                                    <button class="btn btn-secondary" type="button" data-add-admin-service-item>Add another service</button>
+                                    <button class="btn btn-primary" type="submit" name="website_flexi_admin_request_update" value="1">Save Admin Changes</button>
+                                </div>
+                            </form>
+
+                            <template id="admin-service-item-template">
+                                <article class="service-item-card" data-admin-service-item>
+                                    <div class="project-request-grid">
+                                        <p>
+                                            <label>Service Needed</label>
+                                            <select data-admin-name="service" required>
+                                                <option value="">Select service...</option>
+                                                <?php foreach ($service_catalog as $service_name) : ?>
+                                                    <option value="<?php echo esc_attr($service_name); ?>"><?php echo esc_html($service_name); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </p>
+
+                                        <p>
+                                            <label>Actions (multi-select)</label>
+                                            <select data-admin-name="actions" multiple size="5" required>
+                                                <?php foreach ($service_actions as $action_name) : ?>
+                                                    <option value="<?php echo esc_attr($action_name); ?>"><?php echo esc_html($action_name); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </p>
+                                    </div>
+
+                                    <p>
+                                        <label>Detailed Description</label>
+                                        <textarea data-admin-name="description" rows="4" required></textarea>
+                                    </p>
+                                </article>
+                            </template>
+                        <?php endif; ?>
+                    </section>
+                <?php endif; ?>
             </div>
         </div>
     </div>

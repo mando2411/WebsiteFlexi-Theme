@@ -5,6 +5,7 @@
   var menuToggle = document.querySelector('.menu-toggle');
   var headerTools = document.querySelector('#header-tools');
   var dashboardTabs = document.querySelectorAll('.dashboard-tab[data-tab-target]');
+  var dashboardPanelsWrap = document.querySelector('.dashboard-panels');
 
   if (menuToggle && headerTools) {
     function closeMenu() {
@@ -47,35 +48,48 @@
   }
 
   if (dashboardTabs.length) {
+    function activateDashboardTab(targetId) {
+      var targetPanel = document.getElementById(targetId);
+      var targetTab = document.querySelector('.dashboard-tab[data-tab-target="' + targetId + '"]');
+
+      if (!targetPanel || !targetTab) {
+        return;
+      }
+
+      dashboardTabs.forEach(function (currentTab) {
+        currentTab.classList.remove('is-active');
+      });
+
+      document.querySelectorAll('.dashboard-panel').forEach(function (panel) {
+        panel.classList.remove('is-active');
+      });
+
+      targetTab.classList.add('is-active');
+      targetPanel.classList.add('is-active');
+    }
+
     dashboardTabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
         var targetId = tab.getAttribute('data-tab-target');
-        var targetPanel = document.getElementById(targetId);
-
-        if (!targetPanel) {
-          return;
-        }
-
-        dashboardTabs.forEach(function (currentTab) {
-          currentTab.classList.remove('is-active');
-        });
-
-        document.querySelectorAll('.dashboard-panel').forEach(function (panel) {
-          panel.classList.remove('is-active');
-        });
-
-        tab.classList.add('is-active');
-        targetPanel.classList.add('is-active');
+        activateDashboardTab(targetId);
       });
     });
+
+    if (dashboardPanelsWrap) {
+      var initialTab = dashboardPanelsWrap.getAttribute('data-initial-tab');
+      if (initialTab) {
+        activateDashboardTab(initialTab);
+      }
+    }
+
+    if (window.location.hash && window.location.hash.indexOf('#tab-') === 0) {
+      activateDashboardTab(window.location.hash.replace('#', ''));
+    }
 
     var openRequestButton = document.getElementById('open-new-project-request');
     if (openRequestButton) {
       openRequestButton.addEventListener('click', function () {
-        var targetTab = document.querySelector('.dashboard-tab[data-tab-target="tab-projects"]');
-        if (targetTab) {
-          targetTab.click();
-        }
+        activateDashboardTab('tab-projects');
       });
     }
   }
@@ -126,6 +140,55 @@
   if (fullServiceToggle && fullServiceGoals) {
     fullServiceToggle.addEventListener('change', function () {
       fullServiceGoals.classList.toggle('is-visible', !!fullServiceToggle.checked);
+    });
+  }
+
+  var adminServiceItemsContainer = document.querySelector('[data-admin-service-items]');
+  var addAdminServiceButton = document.querySelector('[data-add-admin-service-item]');
+  var adminServiceTemplate = document.getElementById('admin-service-item-template');
+  var adminFullServiceToggle = document.querySelector('[data-admin-full-service-toggle]');
+  var adminFullServiceGoals = document.querySelector('[data-admin-full-service-goals]');
+
+  function updateAdminServiceItemNames() {
+    if (!adminServiceItemsContainer) {
+      return;
+    }
+
+    var cards = adminServiceItemsContainer.querySelectorAll('[data-admin-service-item]');
+    cards.forEach(function (card, index) {
+      var serviceField = card.querySelector('[data-admin-name="service"]') || card.querySelector('select[name*="[service]"]');
+      var actionsField = card.querySelector('[data-admin-name="actions"]') || card.querySelector('select[name*="[actions]"]');
+      var descriptionField = card.querySelector('[data-admin-name="description"]') || card.querySelector('textarea[name*="[description]"]');
+
+      if (serviceField) {
+        serviceField.name = 'admin_service_items[' + index + '][service]';
+      }
+
+      if (actionsField) {
+        actionsField.name = 'admin_service_items[' + index + '][actions][]';
+      }
+
+      if (descriptionField) {
+        descriptionField.name = 'admin_service_items[' + index + '][description]';
+      }
+    });
+  }
+
+  if (adminServiceItemsContainer) {
+    updateAdminServiceItemNames();
+  }
+
+  if (addAdminServiceButton && adminServiceItemsContainer && adminServiceTemplate) {
+    addAdminServiceButton.addEventListener('click', function () {
+      var fragment = adminServiceTemplate.content.cloneNode(true);
+      adminServiceItemsContainer.appendChild(fragment);
+      updateAdminServiceItemNames();
+    });
+  }
+
+  if (adminFullServiceToggle && adminFullServiceGoals) {
+    adminFullServiceToggle.addEventListener('change', function () {
+      adminFullServiceGoals.classList.toggle('is-visible', !!adminFullServiceToggle.checked);
     });
   }
 

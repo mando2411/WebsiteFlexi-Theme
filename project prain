@@ -307,6 +307,28 @@ Always read this file before making any future changes.
 ## Next Phase (Planned)
 - Build admin review tab with permissions and status actions for submitted project requests.
 
+## Implemented: Phase 2 (Admin Review + Permissions)
+- Added admin-only dashboard tab: `Admin Requests` (visible only for users with `manage_options`).
+- Admin tab includes:
+	- List of submitted requests with owner and current status.
+	- Direct `Review / Edit` action per request.
+	- Full editable form for selected request.
+- Admin can update:
+	- Request status (`submitted`, `in_review`, `completed`)
+	- Business intro/details
+	- Business type
+	- Legal status
+	- Full-service toggle and goals
+	- Service lines (service type, multi-actions, detailed description)
+	- Add more service lines dynamically
+- Security:
+	- Admin update action protected by nonce.
+	- Edit UI/action available only for admin users (`manage_options`).
+- UX:
+	- Dashboard can auto-open the correct tab via `dashboard_tab` query or URL hash.
+	- Admin form remains on admin tab after save/validation.
+- Header dashboard action continues to open custom `/dashboard` route, not default WP admin dashboard UI.
+
 
 بياناتى 
 Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions
