@@ -3,11 +3,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$login_page  = get_page_by_path('login');
-$signup_page = get_page_by_path('signup');
-
-$login_url  = $login_page ? get_permalink($login_page) : wp_login_url();
-$signup_url = $signup_page ? get_permalink($signup_page) : wp_registration_url();
+$login_url  = website_flexi_get_page_url_by_template('page-login.php', wp_login_url());
+$signup_url = website_flexi_get_page_url_by_template('page-signup.php', wp_registration_url());
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>

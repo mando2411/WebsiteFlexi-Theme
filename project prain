@@ -33,13 +33,13 @@ Always read this file before making any future changes.
 
 - Path: functions.php
 	Purpose: Theme setup and assets enqueue.
-	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets.
-	Notes: Registers menu and loads CSS/JS.
+	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets, website_flexi_get_page_url_by_template.
+	Notes: Registers menu, loads CSS/JS, and resolves auth page URLs by assigned template.
 
 - Path: header.php
 	Purpose: Shared page header and navigation.
 	Key symbols: wp_head, wp_nav_menu, wp_body_open, .auth-actions links.
-	Notes: Includes About/Contact links and Login/Sign Up actions with page slug fallback.
+	Notes: Includes About/Contact links and Login/Sign Up actions using template-based URL lookup.
 
 - Path: page-login.php
 	Purpose: Custom WordPress-compatible login page template.
@@ -112,6 +112,11 @@ Always read this file before making any future changes.
 	Related files: page-signup.php, header.php, assets/css/main.css
 	Entry point: Page template assignment in WordPress editor
 
+- Feature/Area: Login URL redirection fix
+	Main file: functions.php
+	Related files: header.php, page-login.php, page-signup.php
+	Entry point: login_url and register_url filters
+
 - Feature/Area: Footer and legal text
 	Main file: footer.php
 	Related files: assets/css/main.css
@@ -145,6 +150,11 @@ Always read this file before making any future changes.
 	Change: Created WordPress-compatible custom login and signup page templates.
 	Files touched: page-login.php, page-signup.php, header.php, assets/css/main.css
 	Why: Provide branded auth pages while keeping native WP compatibility and security.
+
+- Date: 2026-04-04
+	Change: Fixed login/signup links to resolve by page template instead of slug only.
+	Files touched: functions.php, header.php, project prain
+	Why: Prevent redirecting users to default wp-login.php when custom auth pages exist.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.
