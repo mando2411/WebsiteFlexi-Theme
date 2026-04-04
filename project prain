@@ -39,7 +39,7 @@ Always read this file before making any future changes.
 - Path: header.php
 	Purpose: Shared page header and navigation.
 	Key symbols: wp_head, wp_nav_menu, wp_body_open, .menu-toggle, .auth-actions links.
-	Notes: Includes responsive mobile menu toggle and auth actions.
+	Notes: Includes responsive mobile menu toggle and conditional auth actions by login state.
 
 - Path: page-login.php
 	Purpose: Custom WordPress-compatible login page template.
@@ -105,7 +105,7 @@ Always read this file before making any future changes.
 - Feature/Area: Header links and auth buttons
 	Main file: header.php
 	Related files: functions.php, assets/css/main.css
-	Entry point: static .nav-menu links, login/signup slug lookup with WP fallback
+	Entry point: static .nav-menu links, login/signup URLs, is_user_logged_in switch
 
 - Feature/Area: Mobile responsiveness system
 	Main file: assets/css/main.css
@@ -205,6 +205,11 @@ Always read this file before making any future changes.
 	Change: Fixed browser/page title for virtual login and signup routes.
 	Files touched: functions.php, project prain
 	Why: Replace "Page Not Found" title with proper branded auth page titles.
+
+- Date: 2026-04-04
+	Change: Updated header auth actions to show Dashboard/Logout for logged-in users.
+	Files touched: header.php, project prain
+	Why: Improve user flow by replacing guest actions after authentication.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.

@@ -34,8 +34,13 @@ $signup_url = website_flexi_get_signup_url();
                 </ul>
             </nav>
             <div class="auth-actions" aria-label="Authentication actions">
-                <a class="btn btn-secondary btn-auth" href="<?php echo esc_url($login_url); ?>">Login</a>
-                <a class="btn btn-primary btn-auth" href="<?php echo esc_url($signup_url); ?>">Sign Up</a>
+                <?php if (is_user_logged_in()) : ?>
+                    <a class="btn btn-secondary btn-auth" href="<?php echo esc_url(admin_url()); ?>">Dashboard</a>
+                    <a class="btn btn-primary btn-auth" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Logout</a>
+                <?php else : ?>
+                    <a class="btn btn-secondary btn-auth" href="<?php echo esc_url($login_url); ?>">Login</a>
+                    <a class="btn btn-primary btn-auth" href="<?php echo esc_url($signup_url); ?>">Sign Up</a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
