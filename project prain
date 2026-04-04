@@ -34,7 +34,7 @@ Always read this file before making any future changes.
 - Path: functions.php
 	Purpose: Theme setup and assets enqueue.
 	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets, website_flexi_get_login_url, website_flexi_get_signup_url, website_flexi_redirect_default_login_page, website_flexi_hide_admin_bar_for_non_admins.
-	Notes: Registers menu, loads CSS/JS with cache-busting filemtime versions, handles auth routing, and hides frontend admin bar for non-admin users.
+	Notes: Registers menu, loads CSS/JS with cache-busting filemtime versions, handles auth routing, hides frontend admin bar for non-admin users, and sets custom document titles for auth routes.
 
 - Path: header.php
 	Purpose: Shared page header and navigation.
@@ -200,6 +200,11 @@ Always read this file before making any future changes.
 	Change: Added cache-busting asset versions and CSS hotfix layer to override style conflicts.
 	Files touched: functions.php, assets/css/main.css, project prain
 	Why: Ensure latest styles load immediately and prevent plugin/theme CSS override issues.
+
+- Date: 2026-04-04
+	Change: Fixed browser/page title for virtual login and signup routes.
+	Files touched: functions.php, project prain
+	Why: Replace "Page Not Found" title with proper branded auth page titles.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.

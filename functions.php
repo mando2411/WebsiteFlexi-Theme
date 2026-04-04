@@ -250,3 +250,22 @@ function website_flexi_hide_admin_bar_for_non_admins($show) {
     return false;
 }
 add_filter('show_admin_bar', 'website_flexi_hide_admin_bar_for_non_admins');
+
+function website_flexi_custom_auth_document_title($title) {
+    if (is_admin()) {
+        return $title;
+    }
+
+    $site_name = get_bloginfo('name');
+
+    if (website_flexi_is_auth_path('login')) {
+        return 'Login - ' . $site_name;
+    }
+
+    if (website_flexi_is_auth_path('signup') || website_flexi_is_auth_path('register')) {
+        return 'Sign Up - ' . $site_name;
+    }
+
+    return $title;
+}
+add_filter('pre_get_document_title', 'website_flexi_custom_auth_document_title');
