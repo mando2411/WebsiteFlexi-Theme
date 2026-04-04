@@ -236,3 +236,12 @@ function website_flexi_redirect_default_login_page() {
     exit;
 }
 add_action('login_init', 'website_flexi_redirect_default_login_page');
+
+function website_flexi_hide_admin_bar_for_non_admins($show) {
+    if (current_user_can('manage_options')) {
+        return $show;
+    }
+
+    return false;
+}
+add_filter('show_admin_bar', 'website_flexi_hide_admin_bar_for_non_admins');

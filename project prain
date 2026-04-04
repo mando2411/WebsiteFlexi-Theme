@@ -33,8 +33,8 @@ Always read this file before making any future changes.
 
 - Path: functions.php
 	Purpose: Theme setup and assets enqueue.
-	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets, website_flexi_get_login_url, website_flexi_get_signup_url, website_flexi_redirect_default_login_page.
-	Notes: Registers menu, loads CSS/JS, resolves auth URLs, redirects wp-login.php GET requests, and serves virtual /login and /signup routes without WP pages.
+	Key symbols: website_flexi_theme_setup, website_flexi_enqueue_assets, website_flexi_get_login_url, website_flexi_get_signup_url, website_flexi_redirect_default_login_page, website_flexi_hide_admin_bar_for_non_admins.
+	Notes: Registers menu, loads CSS/JS, handles auth routing, and hides frontend admin bar for non-admin users.
 
 - Path: header.php
 	Purpose: Shared page header and navigation.
@@ -122,6 +122,11 @@ Always read this file before making any future changes.
 	Related files: page-login.php, page-signup.php
 	Entry point: template_redirect (website_flexi_render_auth_virtual_pages)
 
+- Feature/Area: Admin bar visibility control
+	Main file: functions.php
+	Related files: header.php
+	Entry point: show_admin_bar filter
+
 - Feature/Area: Footer and legal text
 	Main file: footer.php
 	Related files: assets/css/main.css
@@ -170,6 +175,11 @@ Always read this file before making any future changes.
 	Change: Added virtual routing for /login and /signup even when no WordPress pages exist.
 	Files touched: functions.php, project prain
 	Why: Fix ERR_TOO_MANY_REDIRECTS and "No content found" when auth pages are not created in dashboard.
+
+- Date: 2026-04-04
+	Change: Hid WordPress admin bar for all non-admin users on frontend.
+	Files touched: functions.php, project prain
+	Why: Keep client-facing UI clean while preserving admin access.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.
