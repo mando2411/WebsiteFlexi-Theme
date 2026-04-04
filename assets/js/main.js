@@ -2,6 +2,41 @@
   var revealItems = document.querySelectorAll('.reveal, .reveal-stagger');
   var counterItems = document.querySelectorAll('[data-counter]');
   var parallaxItems = document.querySelectorAll('[data-parallax]');
+  var menuToggle = document.querySelector('.menu-toggle');
+  var headerTools = document.querySelector('#header-tools');
+
+  if (menuToggle && headerTools) {
+    menuToggle.addEventListener('click', function () {
+      var isOpen = headerTools.classList.toggle('is-open');
+      menuToggle.classList.toggle('is-open', isOpen);
+      menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      document.body.classList.toggle('menu-open', isOpen);
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!headerTools.classList.contains('is-open')) {
+        return;
+      }
+
+      if (headerTools.contains(event.target) || menuToggle.contains(event.target)) {
+        return;
+      }
+
+      headerTools.classList.remove('is-open');
+      menuToggle.classList.remove('is-open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('menu-open');
+    });
+
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 900) {
+        headerTools.classList.remove('is-open');
+        menuToggle.classList.remove('is-open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('menu-open');
+      }
+    });
+  }
 
   if (!('IntersectionObserver' in window) || !revealItems.length) {
     revealItems.forEach(function (item) {

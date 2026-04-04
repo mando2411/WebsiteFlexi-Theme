@@ -21,7 +21,12 @@ $signup_url = website_flexi_get_signup_url();
             <span class="brand-dot"></span>
             <span class="brand-text"><?php bloginfo('name'); ?></span>
         </a>
-        <div class="header-tools">
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="header-tools" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="header-tools" id="header-tools">
             <nav class="main-nav" aria-label="Primary Navigation">
                 <ul class="nav-menu">
                     <li><a href="<?php echo esc_url(home_url('/about')); ?>">About</a></li>
