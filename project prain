@@ -352,6 +352,15 @@ Always read this file before making any future changes.
 - Root cause hypothesis: when JS fails/interrupted, reveal state keeps opacity hidden and page appears blank despite header/styles loading.
 - Result: dashboard content remains visible even if frontend JS has runtime issues.
 
+## Implemented: Phase 2.5 Duplicate Submit Prevention (PRG)
+- Applied Post/Redirect/Get flow for dashboard POST actions:
+	- Client project submission
+	- Admin request pick (`Review / Edit`)
+	- Admin request update
+- Moved `get_header()` to run after POST processing so redirects can execute safely before output.
+- Added query-flag based success messages after redirect.
+- Result: Reload no longer resubmits previous form action or duplicates requests.
+
 
 بياناتى 
 Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions

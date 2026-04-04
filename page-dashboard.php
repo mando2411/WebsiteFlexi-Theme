@@ -18,8 +18,6 @@ if (!is_user_logged_in()) {
     exit;
 }
 
-get_header();
-
 $current_user = wp_get_current_user();
 $is_admin_user = current_user_can('manage_options');
 
@@ -85,6 +83,14 @@ $service_items = array(
 $admin_form_errors = array();
 $admin_form_success = '';
 
+if (isset($_GET['project_request_submitted']) && '1' === sanitize_text_field(wp_unslash($_GET['project_request_submitted']))) {
+    $form_success = 'Your project request has been submitted successfully. Our team will review it carefully.';
+}
+
+if (isset($_GET['admin_request_updated']) && '1' === sanitize_text_field(wp_unslash($_GET['admin_request_updated']))) {
+    $admin_form_success = 'Request updated successfully. Changes are now saved.';
+}
+
 $client_status_notifications = array();
 
 $admin_selected_request_id = 0;
@@ -95,7 +101,17 @@ if ($is_admin_user && isset($_GET['request_id'])) {
 if ($is_admin_user && isset($_POST['website_flexi_admin_pick_request'])) {
     if (isset($_POST['website_flexi_admin_pick_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_admin_pick_nonce'])), 'website_flexi_admin_pick_action')) {
         $admin_selected_request_id = isset($_POST['pick_request_id']) ? absint($_POST['pick_request_id']) : 0;
-        $initial_tab = 'tab-admin-requests';
+
+        wp_safe_redirect(
+            add_query_arg(
+                array(
+                    'dashboard_tab' => 'tab-admin-requests',
+                    'request_id'    => $admin_selected_request_id,
+                ),
+                website_flexi_get_dashboard_url()
+            ) . '#tab-admin-requests'
+        );
+        exit;
     } else {
         $admin_form_errors[] = 'Security check failed while opening the request.';
     }
@@ -216,20 +232,16 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_project
             update_post_meta($request_id, 'wf_service_items', $service_items);
             update_post_meta($request_id, 'wf_request_status', 'submitted');
 
-            $form_success = 'Your project request has been submitted successfully. Our team will review it carefully.';
-
-            $about_business = '';
-            $business_type = '';
-            $legal_status = '';
-            $needs_full_service = false;
-            $full_goals = '';
-            $service_items = array(
-                array(
-                    'service' => '',
-                    'actions' => array(),
-                    'description' => '',
-                ),
+            wp_safe_redirect(
+                add_query_arg(
+                    array(
+                        'dashboard_tab' => 'tab-projects',
+                        'project_request_submitted' => '1',
+                    ),
+                    website_flexi_get_dashboard_url()
+                ) . '#tab-projects'
             );
+            exit;
         }
     }
 }
@@ -316,7 +328,17 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
             update_post_meta($admin_selected_request->ID, 'wf_status_changed_at', wp_date('Y-m-d H:i:s'));
         }
 
-        $admin_form_success = 'Request updated successfully. Changes are now saved.';
+        wp_safe_redirect(
+            add_query_arg(
+                array(
+                    'dashboard_tab' => 'tab-admin-requests',
+                    'request_id' => $admin_selected_request->ID,
+                    'admin_request_updated' => '1',
+                ),
+                website_flexi_get_dashboard_url()
+            ) . '#tab-admin-requests'
+        );
+        exit;
     }
 }
 
@@ -428,6 +450,8 @@ if ($is_admin_user) {
         )
     );
 }
+
+get_header();
 ?>
 <section class="dashboard-page">
     <div class="container">
