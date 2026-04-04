@@ -307,6 +307,109 @@ body.menu-open {
   margin: 0 0 8px;
 }
 
+.request-cards {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.request-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.request-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.request-card-head h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.request-card-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.status-badge.status-pending {
+  background: rgba(255, 164, 27, 0.14);
+  color: #8c4f00;
+  border-color: rgba(255, 164, 27, 0.4);
+}
+
+.status-badge.status-processing {
+  background: rgba(46, 89, 255, 0.14);
+  color: #1d3fa8;
+  border-color: rgba(46, 89, 255, 0.35);
+}
+
+.status-badge.status-approved {
+  background: rgba(0, 194, 168, 0.14);
+  color: #0a6a5d;
+  border-color: rgba(0, 194, 168, 0.35);
+}
+
+.status-badge.status-declined {
+  background: rgba(255, 106, 61, 0.16);
+  color: #8f2e15;
+  border-color: rgba(255, 106, 61, 0.4);
+}
+
+.status-badge.status-in_need {
+  background: rgba(134, 86, 255, 0.14);
+  color: #4c2a9c;
+  border-color: rgba(134, 86, 255, 0.35);
+}
+
+.request-note {
+  border-radius: 12px;
+  padding: 10px;
+  margin-top: 8px;
+}
+
+.request-note p {
+  margin: 6px 0 0;
+}
+
+.request-note-declined {
+  background: rgba(255, 106, 61, 0.11);
+  border: 1px solid rgba(255, 106, 61, 0.35);
+}
+
+.request-note-needs {
+  background: rgba(134, 86, 255, 0.09);
+  border: 1px solid rgba(134, 86, 255, 0.28);
+}
+
+.request-note-processing {
+  background: rgba(46, 89, 255, 0.09);
+  border: 1px solid rgba(46, 89, 255, 0.25);
+}
+
+.request-note-approved {
+  background: rgba(0, 194, 168, 0.1);
+  border: 1px solid rgba(0, 194, 168, 0.25);
+}
+
 .inline-review-form {
   display: inline;
 }
@@ -1113,6 +1216,11 @@ h1 {
   }
 
   .need-item {
+    align-items: flex-start;
+  }
+
+  .request-card-head {
+    flex-direction: column;
     align-items: flex-start;
   }
 }

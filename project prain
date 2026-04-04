@@ -383,6 +383,15 @@ Always read this file before making any future changes.
 - Notification integration:
 	- Status change updates continue to notify client in dashboard.
 
+## Implemented: Phase 3.1 Professional Client Request UI
+- Reworked client dashboard request display into per-request cards.
+- Each request now shows:
+	- Clear status badge with dedicated color
+	- Request title/date
+	- Status-linked details in the same card (decline reason, needs checklist, processing, approved notes)
+- Removed scattered detached blocks so comments/reasons are visually attached to the correct request.
+- Added polished status visuals for `pending`, `processing`, `approved`, `declined`, `in_need`.
+
 
 بياناتى 
 Grow Your Business Online with Website Flexi – Professional Web Design & Digital Solutions

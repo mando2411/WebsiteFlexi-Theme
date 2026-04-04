@@ -690,65 +690,78 @@ get_header();
                     <?php endif; ?>
 
                     <?php if ($recent_requests->have_posts()) : ?>
-                        <ul class="dashboard-list">
+                        <div class="request-cards">
                             <?php while ($recent_requests->have_posts()) : $recent_requests->the_post(); ?>
-                                <?php $request_status = (string) get_post_meta(get_the_ID(), 'wf_request_status', true); ?>
-                                <li>
-                                    <span><?php the_title(); ?></span>
-                                    <span><?php echo esc_html('Status: ' . (isset($request_status_labels[$request_status]) ? $request_status_labels[$request_status] : 'Pending')); ?></span>
-                                </li>
+                                <?php
+                                $request_id = get_the_ID();
+                                $request_status = (string) get_post_meta($request_id, 'wf_request_status', true);
+                                $request_status = isset($request_status_labels[$request_status]) ? strtolower((string) get_post_meta($request_id, 'wf_request_status', true)) : 'pending';
+                                $status_label = isset($request_status_labels[$request_status]) ? $request_status_labels[$request_status] : 'Pending';
+                                $decline_reason = (string) get_post_meta($request_id, 'wf_decline_reason', true);
+                                $request_needs = get_post_meta($request_id, 'wf_request_needs', true);
+                                $request_needs = is_array($request_needs) ? $request_needs : array();
+                                $resubmit_link = add_query_arg(
+                                    array(
+                                        'dashboard_tab' => 'tab-projects',
+                                        'edit_request' => $request_id,
+                                    ),
+                                    website_flexi_get_dashboard_url()
+                                ) . '#tab-projects';
+                                ?>
+                                <article class="request-card status-<?php echo esc_attr($request_status); ?>">
+                                    <header class="request-card-head">
+                                        <div>
+                                            <h4><?php the_title(); ?></h4>
+                                            <p><?php echo esc_html(get_the_date()); ?></p>
+                                        </div>
+                                        <span class="status-badge status-<?php echo esc_attr($request_status); ?>"><?php echo esc_html($status_label); ?></span>
+                                    </header>
+
+                                    <?php if ('declined' === $request_status) : ?>
+                                        <div class="request-note request-note-declined">
+                                            <strong>Decline Reason:</strong>
+                                            <p><?php echo esc_html($decline_reason ? $decline_reason : 'No reason was provided.'); ?></p>
+                                            <a href="<?php echo esc_url($resubmit_link); ?>">Edit and Re-Submit</a>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ('in_need' === $request_status && !empty($request_needs)) : ?>
+                                        <div class="request-note request-note-needs">
+                                            <strong>Missing Needs:</strong>
+                                            <form class="project-needs-form" method="post" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-overview">
+                                                <?php wp_nonce_field('website_flexi_apply_needs_action', 'website_flexi_apply_needs_nonce'); ?>
+                                                <input type="hidden" name="needs_request_id" value="<?php echo esc_attr((string) $request_id); ?>" />
+
+                                                <?php foreach ($request_needs as $need_index => $need_item) : ?>
+                                                    <label class="need-item">
+                                                        <input type="checkbox" name="done_needs[]" value="<?php echo esc_attr((string) $need_index); ?>" <?php checked(!empty($need_item['done'])); ?> />
+                                                        <span><?php echo esc_html(isset($need_item['text']) ? $need_item['text'] : ''); ?></span>
+                                                    </label>
+                                                <?php endforeach; ?>
+
+                                                <div class="dashboard-actions">
+                                                    <button class="btn btn-primary" type="submit" name="website_flexi_apply_needs" value="1">Apply Needs Update</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ('processing' === $request_status) : ?>
+                                        <div class="request-note request-note-processing">
+                                            Your request is currently under processing by our team.
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ('approved' === $request_status) : ?>
+                                        <div class="request-note request-note-approved">
+                                            Your request has been approved.
+                                        </div>
+                                    <?php endif; ?>
+                                </article>
                             <?php endwhile; ?>
-                        </ul>
+                        </div>
                     <?php else : ?>
                         <p>No project requests yet. Start by clicking "Apply for a New Project".</p>
-                    <?php endif; ?>
-
-                    <?php if (!empty($declined_requests)) : ?>
-                        <div class="status-notifications">
-                            <h3>Declined Requests</h3>
-                            <ul class="dashboard-list dashboard-list-compact">
-                                <?php foreach ($declined_requests as $declined_request) : ?>
-                                    <?php
-                                    $resubmit_link = add_query_arg(
-                                        array(
-                                            'dashboard_tab' => 'tab-projects',
-                                            'edit_request' => $declined_request['id'],
-                                        ),
-                                        website_flexi_get_dashboard_url()
-                                    ) . '#tab-projects';
-                                    ?>
-                                    <li>
-                                        <strong><?php echo esc_html($declined_request['title']); ?></strong>
-                                        <span><?php echo esc_html('Reason: ' . ($declined_request['reason'] ? $declined_request['reason'] : 'No reason provided.')); ?></span>
-                                        <a href="<?php echo esc_url($resubmit_link); ?>">Edit and Re-Submit</a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($in_need_requests)) : ?>
-                        <div class="status-notifications">
-                            <h3>Requests In Need</h3>
-                            <?php foreach ($in_need_requests as $needs_request) : ?>
-                                <form class="project-needs-form" method="post" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-overview">
-                                    <?php wp_nonce_field('website_flexi_apply_needs_action', 'website_flexi_apply_needs_nonce'); ?>
-                                    <input type="hidden" name="needs_request_id" value="<?php echo esc_attr((string) $needs_request['id']); ?>" />
-
-                                    <p><strong><?php echo esc_html($needs_request['title']); ?></strong></p>
-                                    <?php foreach ($needs_request['needs'] as $need_index => $need_item) : ?>
-                                        <label class="need-item">
-                                            <input type="checkbox" name="done_needs[]" value="<?php echo esc_attr((string) $need_index); ?>" <?php checked(!empty($need_item['done'])); ?> />
-                                            <span><?php echo esc_html(isset($need_item['text']) ? $need_item['text'] : ''); ?></span>
-                                        </label>
-                                    <?php endforeach; ?>
-
-                                    <div class="dashboard-actions">
-                                        <button class="btn btn-primary" type="submit" name="website_flexi_apply_needs" value="1">Apply Needs Update</button>
-                                    </div>
-                                </form>
-                            <?php endforeach; ?>
-                        </div>
                     <?php endif; ?>
                 </section>
 
