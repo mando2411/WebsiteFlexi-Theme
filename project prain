@@ -38,8 +38,8 @@ Always read this file before making any future changes.
 
 - Path: header.php
 	Purpose: Shared page header and navigation.
-	Key symbols: wp_head, wp_nav_menu, wp_body_open.
-	Notes: Primary menu location is "primary".
+	Key symbols: wp_head, wp_nav_menu, wp_body_open, .auth-actions links.
+	Notes: Includes About/Contact links and Login/Sign Up actions.
 
 - Path: footer.php
 	Purpose: Shared footer with copyright and wp_footer.
@@ -92,6 +92,11 @@ Always read this file before making any future changes.
 	Related files: functions.php, assets/css/main.css
 	Entry point: get_header()
 
+- Feature/Area: Header links and auth buttons
+	Main file: header.php
+	Related files: functions.php, assets/css/main.css
+	Entry point: static .nav-menu links, wp_login_url, wp_registration_url
+
 - Feature/Area: Footer and legal text
 	Main file: footer.php
 	Related files: assets/css/main.css
@@ -115,6 +120,11 @@ Always read this file before making any future changes.
 	Change: Redesigned homepage to a futuristic creative style with richer animations.
 	Files touched: front-page.php, assets/css/main.css, assets/js/main.js
 	Why: Reflect creative agency identity and improve visual impact.
+
+- Date: 2026-04-04
+	Change: Updated header to include About, Contact Us, Login, and Sign Up actions.
+	Files touched: header.php, functions.php, assets/css/main.css
+	Why: Improve top navigation and make user actions immediately accessible.
 
 ## Notes For Next Edits
 - Update this file after each meaningful change.

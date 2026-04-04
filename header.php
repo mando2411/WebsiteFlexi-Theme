@@ -18,18 +18,18 @@ if (!defined('ABSPATH')) {
             <span class="brand-dot"></span>
             <span class="brand-text"><?php bloginfo('name'); ?></span>
         </a>
-        <nav class="main-nav" aria-label="Primary Navigation">
-            <?php
-            wp_nav_menu(
-                array(
-                    'theme_location' => 'primary',
-                    'container'      => false,
-                    'menu_class'     => 'nav-menu',
-                    'fallback_cb'    => false,
-                )
-            );
-            ?>
-        </nav>
+        <div class="header-tools">
+            <nav class="main-nav" aria-label="Primary Navigation">
+                <ul class="nav-menu">
+                    <li><a href="<?php echo esc_url(home_url('/about')); ?>">About</a></li>
+                    <li><a href="<?php echo esc_url(home_url('/contact')); ?>">Contact Us</a></li>
+                </ul>
+            </nav>
+            <div class="auth-actions" aria-label="Authentication actions">
+                <a class="btn btn-secondary btn-auth" href="<?php echo esc_url(wp_login_url()); ?>">Login</a>
+                <a class="btn btn-primary btn-auth" href="<?php echo esc_url(wp_registration_url()); ?>">Sign Up</a>
+            </div>
+        </div>
     </div>
 </header>
 <main class="site-main">

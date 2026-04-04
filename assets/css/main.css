@@ -61,6 +61,12 @@ h3,
   gap: 18px;
 }
 
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -84,6 +90,17 @@ h3,
   gap: 16px;
   margin: 0;
   padding: 0;
+}
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-auth {
+  padding: 9px 16px;
+  font-size: 0.92rem;
 }
 
 .nav-menu a {
@@ -440,11 +457,28 @@ h1 {
 
   .header-inner {
     min-height: 72px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .header-tools {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .nav-menu {
     gap: 12px;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: flex-start;
+  }
+
+  .auth-actions {
+    margin-left: auto;
+  }
+
+  .btn-auth {
+    padding: 8px 14px;
   }
 }
