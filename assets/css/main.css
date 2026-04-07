@@ -367,6 +367,37 @@ body.menu-open {
   gap: 10px;
 }
 
+.apply-project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.apply-project-grid-secondary {
+  grid-template-columns: 1fr 1fr;
+}
+
+.apply-steps-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.apply-steps-list li {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.84);
+  padding: 8px 10px;
+}
+
+.project-request-form h3 {
+  margin: 8px 0 2px;
+  font-size: 1.02rem;
+}
+
 .dashboard-list {
   margin: 10px 0 0;
   padding: 0;
@@ -1403,7 +1434,9 @@ h1 {
   }
 
   .dashboard-summary-grid,
-  .dashboard-overview-grid {
+  .dashboard-overview-grid,
+  .apply-project-grid,
+  .apply-project-grid-secondary {
     grid-template-columns: 1fr;
   }
 

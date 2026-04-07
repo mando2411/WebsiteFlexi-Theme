@@ -1205,7 +1205,7 @@ get_header();
         <div class="dashboard-layout">
             <aside class="dashboard-tabs glass-card" aria-label="Dashboard Tabs">
                 <button class="dashboard-tab is-active" type="button" data-tab-target="tab-overview">Dashboard</button>
-                <button class="dashboard-tab" type="button" data-tab-target="tab-projects">Projects</button>
+                <button class="dashboard-tab" type="button" data-tab-target="tab-projects">Apply New Project</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-workspace">Project Workspace</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-achievements">Achievements</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-assets">Assets</button>
@@ -1479,8 +1479,50 @@ get_header();
                 </section>
 
                 <section class="dashboard-panel glass-card" id="tab-projects">
-                    <h2>Projects</h2>
-                    <p class="project-request-hint">If you are a new business and want Website Flexi to handle all digital marketing services, enable the option below and describe your full goals.</p>
+                    <h2>Apply New Project</h2>
+                    <p class="project-request-hint">Submit your project with clear business details so the team can start execution faster with fewer revisions.</p>
+
+                    <div class="apply-project-grid">
+                        <article class="dashboard-summary-card dashboard-summary-card-primary">
+                            <p class="dashboard-summary-label">Submission Readiness</p>
+                            <strong><?php echo esc_html((string) max(0, (100 - ($in_need_count * 10) - ($declined_count * 10)))); ?>%</strong>
+                            <p>Improve approval speed by adding complete service details and accurate assets from the first submission.</p>
+                        </article>
+
+                        <article class="dashboard-summary-card">
+                            <p class="dashboard-summary-label">Your Current Queue</p>
+                            <strong><?php echo esc_html((string) $submitted_count); ?></strong>
+                            <p>Open requests: Pending <?php echo esc_html((string) $pending_count); ?>, In Need <?php echo esc_html((string) $in_need_count); ?>, Declined <?php echo esc_html((string) $declined_count); ?>.</p>
+                        </article>
+
+                        <article class="dashboard-summary-card">
+                            <p class="dashboard-summary-label">Execution Capacity</p>
+                            <strong><?php echo esc_html((string) $active_services_count); ?></strong>
+                            <p>Active service lines across your projects. Keep each new request focused and measurable.</p>
+                        </article>
+                    </div>
+
+                    <div class="apply-project-grid apply-project-grid-secondary">
+                        <article class="dashboard-overview-card">
+                            <h3>How To Submit Fast</h3>
+                            <ul class="apply-steps-list">
+                                <li><strong>1.</strong> Add a concise business summary and legal status.</li>
+                                <li><strong>2.</strong> Select the exact services and actions needed.</li>
+                                <li><strong>3.</strong> Write measurable descriptions for each service line.</li>
+                                <li><strong>4.</strong> If needed, enable full-service and list the final goals.</li>
+                            </ul>
+                        </article>
+
+                        <article class="dashboard-overview-card">
+                            <h3>Submission Quality Tips</h3>
+                            <ul class="dashboard-list dashboard-list-compact">
+                                <li><strong>Business Brief</strong><span>Explain market, offer, and audience in 3-5 lines.</span></li>
+                                <li><strong>Service Scope</strong><span>Avoid broad requests; split each goal by service line.</span></li>
+                                <li><strong>Expected Outcome</strong><span>Include target KPI or success criteria when possible.</span></li>
+                                <li><strong>Assets Support</strong><span>Upload brand files in Assets tab after submission.</span></li>
+                            </ul>
+                        </article>
+                    </div>
 
                     <?php if (!empty($form_success)) : ?>
                         <p class="auth-message success"><?php echo esc_html($form_success); ?></p>
@@ -1499,6 +1541,8 @@ get_header();
                         <?php if ($client_edit_request) : ?>
                             <input type="hidden" name="resubmit_request_id" value="<?php echo esc_attr((string) $client_edit_request->ID); ?>" />
                         <?php endif; ?>
+
+                        <h3>Business Foundation</h3>
 
                         <p>
                             <label for="about_business">About You / Your Business</label>
@@ -1521,6 +1565,8 @@ get_header();
                                 </select>
                             </p>
                         </div>
+
+                        <h3>Service Scope</h3>
 
                         <p class="full-service-toggle">
                             <label>
@@ -1566,7 +1612,7 @@ get_header();
                             <?php endforeach; ?>
                         </div>
 
-                        <p class="project-request-hint">Do not worry. Your request will be reviewed carefully. If your selection is not fully correct, it will be adjusted during review.</p>
+                        <p class="project-request-hint">Your request will be reviewed carefully. If any details are missing, the team will request only the exact required updates.</p>
 
                         <div class="dashboard-actions">
                             <button class="btn btn-secondary" type="button" data-add-service-item>Add another service</button>
