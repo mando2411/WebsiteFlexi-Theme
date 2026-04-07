@@ -320,6 +320,10 @@ body.menu-open {
   background: #ffffff;
 }
 
+.request-card.is-hidden {
+  display: none;
+}
+
 .request-card-head {
   display: flex;
   justify-content: space-between;
@@ -430,6 +434,42 @@ body.menu-open {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.assets-filter {
+  margin-top: 16px;
+}
+
+.asset-filter-btn {
+  min-width: 90px;
+  border: 1px solid var(--line);
+}
+
+.asset-filter-btn.is-active {
+  background: linear-gradient(120deg, var(--brand), var(--brand-2));
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(46, 89, 255, 0.25);
+}
+
+.asset-preview {
+  margin: 10px 0 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #f8faff;
+}
+
+.asset-preview img,
+.asset-preview video {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: cover;
+}
+
+.assets-empty-message {
+  margin-top: 12px;
 }
 
 .project-request-form {

@@ -241,6 +241,11 @@ Always read this file before making any future changes.
 	Files touched: functions.php, page-dashboard.php, project prain
 	Why: Let clients submit structured text/files (title + description + text/file) and quickly provide missing materials requested during review.
 
+- Date: 2026-04-07
+	Change: Added inline image/video preview in asset cards and quick assets filter (All/Text/File).
+	Files touched: page-dashboard.php, assets/js/main.js, assets/css/main.css, project prain
+	Why: Improve client speed in reviewing uploaded materials and simplify navigating large asset lists.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.

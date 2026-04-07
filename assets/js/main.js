@@ -256,6 +256,45 @@
     ensureNeedsInputTail();
   }
 
+  var assetFilterButtons = document.querySelectorAll('[data-asset-filter]');
+  var assetCards = document.querySelectorAll('[data-assets-list] .request-card[data-asset-kind]');
+  var assetsEmptyMessage = document.querySelector('[data-assets-empty]');
+
+  if (assetFilterButtons.length && assetCards.length) {
+    function applyAssetFilter(filterValue) {
+      var visibleCount = 0;
+
+      assetCards.forEach(function (card) {
+        var kind = card.getAttribute('data-asset-kind') || 'file';
+        var shouldShow = filterValue === 'all' || kind === filterValue;
+        card.classList.toggle('is-hidden', !shouldShow);
+
+        if (shouldShow) {
+          visibleCount += 1;
+        }
+      });
+
+      if (assetsEmptyMessage) {
+        assetsEmptyMessage.hidden = visibleCount !== 0;
+      }
+    }
+
+    assetFilterButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        var filterValue = button.getAttribute('data-asset-filter') || 'all';
+
+        assetFilterButtons.forEach(function (currentButton) {
+          currentButton.classList.remove('is-active');
+        });
+
+        button.classList.add('is-active');
+        applyAssetFilter(filterValue);
+      });
+    });
+
+    applyAssetFilter('all');
+  }
+
   if (!('IntersectionObserver' in window) || !revealItems.length) {
     revealItems.forEach(function (item) {
       item.classList.add('is-visible');

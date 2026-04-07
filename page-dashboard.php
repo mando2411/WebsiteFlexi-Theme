@@ -1043,7 +1043,13 @@ get_header();
                     </form>
 
                     <?php if ($assets_query->have_posts()) : ?>
-                        <div class="request-cards">
+                        <div class="dashboard-actions assets-filter" role="group" aria-label="Assets filter">
+                            <button class="btn btn-secondary asset-filter-btn is-active" type="button" data-asset-filter="all">All</button>
+                            <button class="btn btn-secondary asset-filter-btn" type="button" data-asset-filter="text">Text</button>
+                            <button class="btn btn-secondary asset-filter-btn" type="button" data-asset-filter="file">File</button>
+                        </div>
+
+                        <div class="request-cards" data-assets-list>
                             <?php while ($assets_query->have_posts()) : $assets_query->the_post(); ?>
                                 <?php
                                 $asset_id = get_the_ID();
@@ -1051,8 +1057,10 @@ get_header();
                                 $asset_text_value = (string) get_post_meta($asset_id, 'wf_asset_text', true);
                                 $asset_attachment_id = (int) get_post_meta($asset_id, 'wf_asset_attachment_id', true);
                                 $asset_file_url = $asset_attachment_id ? wp_get_attachment_url($asset_attachment_id) : '';
+                                $asset_file_mime = $asset_attachment_id ? (string) get_post_mime_type($asset_attachment_id) : '';
+                                $asset_kind_safe = in_array($asset_kind, array('text', 'file'), true) ? $asset_kind : 'file';
                                 ?>
-                                <article class="request-card status-processing">
+                                <article class="request-card status-processing" data-asset-kind="<?php echo esc_attr($asset_kind_safe); ?>">
                                     <header class="request-card-head">
                                         <div>
                                             <h4><?php the_title(); ?></h4>
@@ -1075,11 +1083,26 @@ get_header();
                                     <?php if (!empty($asset_file_url)) : ?>
                                         <div class="request-note request-note-approved">
                                             <a href="<?php echo esc_url($asset_file_url); ?>" target="_blank" rel="noopener noreferrer">Open Uploaded File</a>
+
+                                            <?php if (0 === strpos($asset_file_mime, 'image/')) : ?>
+                                                <figure class="asset-preview asset-preview-image">
+                                                    <img src="<?php echo esc_url($asset_file_url); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" loading="lazy" />
+                                                </figure>
+                                            <?php elseif (0 === strpos($asset_file_mime, 'video/')) : ?>
+                                                <figure class="asset-preview asset-preview-video">
+                                                    <video controls preload="metadata">
+                                                        <source src="<?php echo esc_url($asset_file_url); ?>" type="<?php echo esc_attr($asset_file_mime); ?>" />
+                                                        Your browser does not support the video tag.
+                                                    </video>
+                                                </figure>
+                                            <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
                                 </article>
                             <?php endwhile; ?>
                         </div>
+
+                        <p class="project-request-hint assets-empty-message" data-assets-empty hidden>No assets match this filter yet.</p>
                     <?php else : ?>
                         <p>No assets uploaded yet. Add your first asset above.</p>
                     <?php endif; ?>
