@@ -1151,6 +1151,36 @@ $pipeline_counts = array(
     'approved' => $completed_count,
 );
 
+$workspace_total_steps_count = 0;
+$workspace_done_steps_count = 0;
+$workspace_open_steps_count = 0;
+$workspace_status_counts = array(
+    'pending' => 0,
+    'processing' => 0,
+    'in_need' => 0,
+    'approved' => 0,
+);
+
+foreach ($client_workspace_projects as $workspace_project_row) {
+    $workspace_status_key = isset($workspace_project_row['status']) ? (string) $workspace_project_row['status'] : 'pending';
+    if (!isset($workspace_status_counts[$workspace_status_key])) {
+        $workspace_status_key = 'pending';
+    }
+    $workspace_status_counts[$workspace_status_key]++;
+
+    $workspace_steps_items = isset($workspace_project_row['steps']) && is_array($workspace_project_row['steps']) ? $workspace_project_row['steps'] : array();
+    foreach ($workspace_steps_items as $workspace_step_item_row) {
+        $workspace_total_steps_count++;
+        if (!empty($workspace_step_item_row['done'])) {
+            $workspace_done_steps_count++;
+        } else {
+            $workspace_open_steps_count++;
+        }
+    }
+}
+
+$workspace_progress_rate = $workspace_total_steps_count > 0 ? (int) round(($workspace_done_steps_count / $workspace_total_steps_count) * 100) : 0;
+
 $recent_requests = new WP_Query(
     array(
         'post_type'      => 'wf_project_request',
@@ -1395,12 +1425,49 @@ get_header();
 
                 <section class="dashboard-panel glass-card" id="tab-workspace">
                     <h2>Project Workspace</h2>
-                    <p class="project-request-hint">This area shows your approved project strategy, goals, steps progress, and all admin timeline updates in read-only mode.</p>
+                    <p class="project-request-hint">A compact execution hub showing plans, goals, progress steps, and timeline updates in a read-only professional format.</p>
+
+                    <div class="workspace-summary-grid">
+                        <article class="dashboard-summary-card dashboard-summary-card-primary">
+                            <p class="dashboard-summary-label">Workspace Completion</p>
+                            <strong><?php echo esc_html((string) $workspace_progress_rate); ?>%</strong>
+                            <p><?php echo esc_html((string) $workspace_done_steps_count); ?> completed step(s) from <?php echo esc_html((string) $workspace_total_steps_count); ?> tracked execution steps.</p>
+                        </article>
+
+                        <article class="dashboard-summary-card">
+                            <p class="dashboard-summary-label">Published Workspaces</p>
+                            <strong><?php echo esc_html((string) $workspace_ready_count); ?></strong>
+                            <p>Approved: <?php echo esc_html((string) $workspace_status_counts['approved']); ?> | Processing: <?php echo esc_html((string) $workspace_status_counts['processing']); ?></p>
+                        </article>
+
+                        <article class="dashboard-summary-card">
+                            <p class="dashboard-summary-label">Focus Queue</p>
+                            <strong><?php echo esc_html((string) ($workspace_status_counts['in_need'] + $workspace_open_steps_count)); ?></strong>
+                            <p>In Need: <?php echo esc_html((string) $workspace_status_counts['in_need']); ?> | Open steps: <?php echo esc_html((string) $workspace_open_steps_count); ?></p>
+                        </article>
+                    </div>
 
                     <?php if (!empty($client_workspace_projects)) : ?>
-                        <div class="request-cards">
+                        <div class="workspace-toolbar" role="group" aria-label="Workspace controls">
+                            <div class="workspace-filter-controls">
+                                <button class="btn btn-secondary workspace-filter-btn is-active" type="button" data-workspace-filter="all">All</button>
+                                <button class="btn btn-secondary workspace-filter-btn" type="button" data-workspace-filter="approved">Approved</button>
+                                <button class="btn btn-secondary workspace-filter-btn" type="button" data-workspace-filter="processing">Processing</button>
+                                <button class="btn btn-secondary workspace-filter-btn" type="button" data-workspace-filter="in_need">In Need</button>
+                                <button class="btn btn-secondary workspace-filter-btn" type="button" data-workspace-filter="pending">Pending</button>
+                            </div>
+
+                            <div class="workspace-search-wrap">
+                                <label for="workspace-search" class="screen-reader-text">Search projects in workspace</label>
+                                <input id="workspace-search" type="search" placeholder="Search workspace projects..." data-workspace-search />
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($client_workspace_projects)) : ?>
+                        <div class="request-cards" data-workspace-list>
                             <?php foreach ($client_workspace_projects as $client_workspace_project) : ?>
-                                <article class="request-card status-<?php echo esc_attr($client_workspace_project['status']); ?> workspace-readonly-card">
+                                <article class="request-card status-<?php echo esc_attr($client_workspace_project['status']); ?> workspace-readonly-card" data-workspace-status="<?php echo esc_attr($client_workspace_project['status']); ?>" data-workspace-title="<?php echo esc_attr(strtolower($client_workspace_project['title'])); ?>">
                                     <header class="request-card-head">
                                         <div>
                                             <h4><?php echo esc_html($client_workspace_project['title']); ?></h4>
@@ -1473,6 +1540,8 @@ get_header();
                                 </article>
                             <?php endforeach; ?>
                         </div>
+
+                        <p class="project-request-hint workspace-empty-message" data-workspace-empty hidden>No workspace projects match your current filter or search.</p>
                     <?php else : ?>
                         <p>No workspace has been published for your projects yet.</p>
                     <?php endif; ?>

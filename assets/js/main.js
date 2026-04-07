@@ -459,6 +459,58 @@
     applyTimelineFilter('all');
   });
 
+  var workspaceList = document.querySelector('[data-workspace-list]');
+  var workspaceCards = workspaceList ? workspaceList.querySelectorAll('.workspace-readonly-card[data-workspace-status]') : [];
+  var workspaceFilterButtons = document.querySelectorAll('[data-workspace-filter]');
+  var workspaceSearchInput = document.querySelector('[data-workspace-search]');
+  var workspaceEmptyMessage = document.querySelector('[data-workspace-empty]');
+
+  if (workspaceCards.length) {
+    var workspaceActiveFilter = 'all';
+    var workspaceSearchValue = '';
+
+    function applyWorkspaceControls() {
+      var visibleCount = 0;
+
+      workspaceCards.forEach(function (card) {
+        var status = card.getAttribute('data-workspace-status') || 'pending';
+        var title = card.getAttribute('data-workspace-title') || '';
+        var passFilter = workspaceActiveFilter === 'all' || status === workspaceActiveFilter;
+        var passSearch = workspaceSearchValue === '' || title.indexOf(workspaceSearchValue) !== -1;
+        var visible = passFilter && passSearch;
+
+        card.classList.toggle('is-hidden', !visible);
+        if (visible) {
+          visibleCount += 1;
+        }
+      });
+
+      if (workspaceEmptyMessage) {
+        workspaceEmptyMessage.hidden = visibleCount !== 0;
+      }
+    }
+
+    workspaceFilterButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        workspaceActiveFilter = button.getAttribute('data-workspace-filter') || 'all';
+        workspaceFilterButtons.forEach(function (currentButton) {
+          currentButton.classList.remove('is-active');
+        });
+        button.classList.add('is-active');
+        applyWorkspaceControls();
+      });
+    });
+
+    if (workspaceSearchInput) {
+      workspaceSearchInput.addEventListener('input', function () {
+        workspaceSearchValue = (workspaceSearchInput.value || '').trim().toLowerCase();
+        applyWorkspaceControls();
+      });
+    }
+
+    applyWorkspaceControls();
+  }
+
   if (!('IntersectionObserver' in window) || !revealItems.length) {
     revealItems.forEach(function (item) {
       item.classList.add('is-visible');

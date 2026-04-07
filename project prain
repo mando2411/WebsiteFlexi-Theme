@@ -271,6 +271,11 @@ Always read this file before making any future changes.
 	Files touched: page-dashboard.php, assets/css/main.css, project prain
 	Why: Reduce submission friction, improve form clarity, and increase first-pass approval quality on mobile and desktop.
 
+- Date: 2026-04-07
+	Change: Upgraded client Project Workspace tab with execution summary cards, status filters, live search, and clearer read-only progress presentation.
+	Files touched: page-dashboard.php, assets/js/main.js, assets/css/main.css, project prain
+	Why: Make large workspace data easier to navigate quickly and improve daily project follow-up UX on all devices.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.
