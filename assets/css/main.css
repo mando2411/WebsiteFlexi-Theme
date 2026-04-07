@@ -472,6 +472,63 @@ body.menu-open {
   margin-top: 12px;
 }
 
+.workspace-step-item {
+  align-items: center;
+}
+
+.workspace-step-item input[type='text'] {
+  flex: 1;
+}
+
+.workspace-plan-view {
+  margin-top: 18px;
+}
+
+.workspace-steps-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.workspace-steps-list li {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.workspace-steps-list li em {
+  font-style: normal;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.workspace-steps-list li.is-done {
+  border-color: rgba(0, 194, 168, 0.35);
+}
+
+.workspace-steps-list li.is-done em {
+  background: rgba(0, 194, 168, 0.14);
+  color: #0a6a5d;
+}
+
+.workspace-steps-list li.is-pending {
+  border-color: rgba(255, 164, 27, 0.38);
+}
+
+.workspace-steps-list li.is-pending em {
+  background: rgba(255, 164, 27, 0.14);
+  color: #8c4f00;
+}
+
 .project-request-form {
   margin-top: 16px;
   display: grid;

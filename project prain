@@ -246,6 +246,11 @@ Always read this file before making any future changes.
 	Files touched: page-dashboard.php, assets/js/main.js, assets/css/main.css, project prain
 	Why: Improve client speed in reviewing uploaded materials and simplify navigating large asset lists.
 
+- Date: 2026-04-07
+	Change: Added admin Review Project flow with editable project data + editable client assets, plus Project Workspace for plan/goals/steps and approve/in-need decision.
+	Files touched: page-dashboard.php, assets/js/main.js, assets/css/main.css, project prain
+	Why: Give admins a complete project lifecycle screen from review to strategic execution tracking while keeping ability to request more assets.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.

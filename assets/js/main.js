@@ -295,6 +295,119 @@
     applyAssetFilter('all');
   }
 
+  var workspaceDecision = document.querySelector('[data-workspace-decision]');
+  var workspaceNeedsBlock = document.querySelector('[data-workspace-needs-block]');
+  var workspaceNeedsContainer = document.querySelector('[data-workspace-needs-container]');
+  var workspaceStepsContainer = document.querySelector('[data-workspace-steps-container]');
+
+  function createWorkspaceStepRow() {
+    var row = document.createElement('label');
+    row.className = 'need-item workspace-step-item';
+
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.name = 'workspace_step_done[]';
+    checkbox.value = '-1';
+
+    var text = document.createElement('input');
+    text.type = 'text';
+    text.name = 'workspace_step_fields[]';
+    text.placeholder = 'Add one execution step';
+
+    row.appendChild(checkbox);
+    row.appendChild(text);
+
+    return row;
+  }
+
+  function normalizeWorkspaceStepRows() {
+    if (!workspaceStepsContainer) {
+      return;
+    }
+
+    var rows = workspaceStepsContainer.querySelectorAll('.workspace-step-item');
+    if (!rows.length) {
+      workspaceStepsContainer.appendChild(createWorkspaceStepRow());
+      rows = workspaceStepsContainer.querySelectorAll('.workspace-step-item');
+    }
+
+    rows.forEach(function (row, index) {
+      var checkbox = row.querySelector('input[type="checkbox"][name="workspace_step_done[]"]');
+      if (checkbox) {
+        checkbox.value = String(index);
+      }
+    });
+
+    var lastRow = rows[rows.length - 1];
+    var lastText = lastRow ? lastRow.querySelector('input[type="text"][name="workspace_step_fields[]"]') : null;
+
+    if (lastText && lastText.value.trim() !== '') {
+      workspaceStepsContainer.appendChild(createWorkspaceStepRow());
+      normalizeWorkspaceStepRows();
+    }
+  }
+
+  function ensureWorkspaceNeedsTail() {
+    if (!workspaceNeedsContainer) {
+      return;
+    }
+
+    var inputs = workspaceNeedsContainer.querySelectorAll('input[name="workspace_need_fields[]"]');
+    if (!inputs.length) {
+      var firstInput = document.createElement('input');
+      firstInput.type = 'text';
+      firstInput.name = 'workspace_need_fields[]';
+      firstInput.placeholder = 'Add one required item';
+      workspaceNeedsContainer.appendChild(firstInput);
+      inputs = workspaceNeedsContainer.querySelectorAll('input[name="workspace_need_fields[]"]');
+    }
+
+    var lastInput = inputs[inputs.length - 1];
+    if (lastInput && lastInput.value.trim() !== '') {
+      var newInput = document.createElement('input');
+      newInput.type = 'text';
+      newInput.name = 'workspace_need_fields[]';
+      newInput.placeholder = 'Add one required item';
+      workspaceNeedsContainer.appendChild(newInput);
+    }
+  }
+
+  function refreshWorkspaceDecisionFields() {
+    if (!workspaceDecision || !workspaceNeedsBlock) {
+      return;
+    }
+
+    var value = workspaceDecision.value;
+    workspaceNeedsBlock.classList.toggle('is-visible', value === 'in_need');
+
+    if (value === 'in_need') {
+      ensureWorkspaceNeedsTail();
+    }
+  }
+
+  if (workspaceStepsContainer) {
+    workspaceStepsContainer.addEventListener('input', function (event) {
+      if (event.target && event.target.matches('input[type="text"][name="workspace_step_fields[]"]')) {
+        normalizeWorkspaceStepRows();
+      }
+    });
+
+    normalizeWorkspaceStepRows();
+  }
+
+  if (workspaceDecision) {
+    workspaceDecision.addEventListener('change', refreshWorkspaceDecisionFields);
+    refreshWorkspaceDecisionFields();
+  }
+
+  if (workspaceNeedsContainer) {
+    workspaceNeedsContainer.addEventListener('input', function (event) {
+      if (event.target && event.target.matches('input[name="workspace_need_fields[]"]')) {
+        ensureWorkspaceNeedsTail();
+      }
+    });
+  }
+
   if (!('IntersectionObserver' in window) || !revealItems.length) {
     revealItems.forEach(function (item) {
       item.classList.add('is-visible');

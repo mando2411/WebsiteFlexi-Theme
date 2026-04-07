@@ -29,6 +29,8 @@ $allowed_dashboard_tabs = array(
     'tab-stats',
     'tab-account',
     'tab-admin-requests',
+    'tab-admin-review',
+    'tab-admin-workspace',
 );
 
 $initial_tab = isset($_GET['dashboard_tab']) ? sanitize_key(wp_unslash($_GET['dashboard_tab'])) : 'tab-overview';
@@ -110,6 +112,14 @@ if (isset($_GET['admin_request_updated']) && '1' === sanitize_text_field(wp_unsl
     $admin_form_success = 'Request updated successfully. Changes are now saved.';
 }
 
+if (isset($_GET['admin_asset_updated']) && '1' === sanitize_text_field(wp_unslash($_GET['admin_asset_updated']))) {
+    $admin_form_success = 'Asset updated successfully.';
+}
+
+if (isset($_GET['admin_workspace_saved']) && '1' === sanitize_text_field(wp_unslash($_GET['admin_workspace_saved']))) {
+    $admin_form_success = 'Project workspace has been saved successfully.';
+}
+
 $client_status_notifications = array();
 
 $declined_requests = array();
@@ -120,18 +130,33 @@ if ($is_admin_user && isset($_GET['request_id'])) {
     $admin_selected_request_id = absint($_GET['request_id']);
 }
 
+$admin_workspace_request_id = 0;
+if ($is_admin_user && isset($_GET['workspace_request'])) {
+    $admin_workspace_request_id = absint($_GET['workspace_request']);
+}
+
 if ($is_admin_user && isset($_POST['website_flexi_admin_pick_request'])) {
     if (isset($_POST['website_flexi_admin_pick_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_admin_pick_nonce'])), 'website_flexi_admin_pick_action')) {
         $admin_selected_request_id = isset($_POST['pick_request_id']) ? absint($_POST['pick_request_id']) : 0;
+        $pick_target_tab = isset($_POST['pick_target_tab']) ? sanitize_key(wp_unslash($_POST['pick_target_tab'])) : 'tab-admin-requests';
+        if (!in_array($pick_target_tab, array('tab-admin-requests', 'tab-admin-review', 'tab-admin-workspace'), true)) {
+            $pick_target_tab = 'tab-admin-requests';
+        }
+
+        $pick_args = array(
+            'dashboard_tab' => $pick_target_tab,
+            'request_id'    => $admin_selected_request_id,
+        );
+
+        if ('tab-admin-workspace' === $pick_target_tab) {
+            $pick_args['workspace_request'] = $admin_selected_request_id;
+        }
 
         wp_safe_redirect(
             add_query_arg(
-                array(
-                    'dashboard_tab' => 'tab-admin-requests',
-                    'request_id'    => $admin_selected_request_id,
-                ),
+                $pick_args,
                 website_flexi_get_dashboard_url()
-            ) . '#tab-admin-requests'
+            ) . '#' . $pick_target_tab
         );
         exit;
     } else {
@@ -140,6 +165,7 @@ if ($is_admin_user && isset($_POST['website_flexi_admin_pick_request'])) {
 }
 
 $admin_selected_request = null;
+$admin_workspace_request = null;
 $admin_about_business = '';
 $admin_business_type = '';
 $admin_legal_status = '';
@@ -155,6 +181,18 @@ $admin_service_items = array(
     ),
 );
 $admin_request_status = 'pending';
+$admin_review_assets_query = null;
+
+$workspace_plan = '';
+$workspace_goals = '';
+$workspace_steps = array(
+    array(
+        'text' => '',
+        'done' => false,
+    ),
+);
+$workspace_decision_status = 'approved';
+$workspace_need_fields = array('');
 
 $client_edit_request_id = isset($_GET['edit_request']) ? absint($_GET['edit_request']) : 0;
 $client_edit_request = null;
@@ -442,7 +480,7 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_project
 }
 
 if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_request_update']) && $is_admin_user) {
-    $initial_tab = 'tab-admin-requests';
+    $initial_tab = 'tab-admin-review';
 
     if (!isset($_POST['website_flexi_admin_request_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_admin_request_nonce'])), 'website_flexi_admin_request_action')) {
         $admin_form_errors[] = 'Security check failed. Please refresh and try again.';
@@ -450,6 +488,10 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
 
     $admin_selected_request_id = isset($_POST['admin_request_id']) ? absint($_POST['admin_request_id']) : 0;
     $admin_selected_request = $admin_selected_request_id ? get_post($admin_selected_request_id) : null;
+    $admin_redirect_tab = isset($_POST['admin_redirect_tab']) ? sanitize_key(wp_unslash($_POST['admin_redirect_tab'])) : 'tab-admin-review';
+    if (!in_array($admin_redirect_tab, array('tab-admin-requests', 'tab-admin-review', 'tab-admin-workspace'), true)) {
+        $admin_redirect_tab = 'tab-admin-review';
+    }
 
     if (!$admin_selected_request || 'wf_project_request' !== $admin_selected_request->post_type) {
         $admin_form_errors[] = 'Invalid request selected.';
@@ -565,13 +607,216 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
 
         wp_safe_redirect(
             add_query_arg(
-                array(
-                    'dashboard_tab' => 'tab-admin-requests',
-                    'request_id' => $admin_selected_request->ID,
-                    'admin_request_updated' => '1',
+                (
+                    'approved' === $admin_request_status
+                    ? array(
+                        'dashboard_tab' => 'tab-admin-workspace',
+                        'workspace_request' => $admin_selected_request->ID,
+                        'request_id' => $admin_selected_request->ID,
+                        'admin_request_updated' => '1',
+                    )
+                    : array(
+                        'dashboard_tab' => $admin_redirect_tab,
+                        'request_id' => $admin_selected_request->ID,
+                        'admin_request_updated' => '1',
+                    )
                 ),
                 website_flexi_get_dashboard_url()
-            ) . '#tab-admin-requests'
+            ) . ('approved' === $admin_request_status ? '#tab-admin-workspace' : '#' . $admin_redirect_tab)
+        );
+        exit;
+    }
+}
+
+if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_asset_update']) && $is_admin_user) {
+    $initial_tab = 'tab-admin-review';
+
+    if (!isset($_POST['website_flexi_admin_asset_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_admin_asset_nonce'])), 'website_flexi_admin_asset_action')) {
+        $admin_form_errors[] = 'Security check failed while updating asset.';
+    }
+
+    $admin_selected_request_id = isset($_POST['admin_request_id']) ? absint($_POST['admin_request_id']) : 0;
+    $admin_selected_request = $admin_selected_request_id ? get_post($admin_selected_request_id) : null;
+    $admin_asset_id = isset($_POST['admin_asset_id']) ? absint($_POST['admin_asset_id']) : 0;
+    $admin_asset_post = $admin_asset_id ? get_post($admin_asset_id) : null;
+
+    if (!$admin_selected_request || 'wf_project_request' !== $admin_selected_request->post_type) {
+        $admin_form_errors[] = 'Invalid project selected while updating asset.';
+    }
+
+    if (!$admin_asset_post || 'wf_client_asset' !== $admin_asset_post->post_type) {
+        $admin_form_errors[] = 'Invalid asset selected.';
+    }
+
+    if ($admin_selected_request && $admin_asset_post && (int) $admin_selected_request->post_author !== (int) $admin_asset_post->post_author) {
+        $admin_form_errors[] = 'This asset does not belong to the selected project owner.';
+    }
+
+    $admin_asset_title = isset($_POST['admin_asset_title']) ? sanitize_text_field(wp_unslash($_POST['admin_asset_title'])) : '';
+    $admin_asset_description = isset($_POST['admin_asset_description']) ? sanitize_textarea_field(wp_unslash($_POST['admin_asset_description'])) : '';
+    $admin_asset_text = isset($_POST['admin_asset_text']) ? sanitize_textarea_field(wp_unslash($_POST['admin_asset_text'])) : '';
+    $admin_asset_has_file = isset($_FILES['admin_asset_file']) && isset($_FILES['admin_asset_file']['size']) && (int) $_FILES['admin_asset_file']['size'] > 0;
+
+    if ('' === $admin_asset_title) {
+        $admin_form_errors[] = 'Asset title cannot be empty.';
+    }
+
+    if ('' === $admin_asset_description) {
+        $admin_form_errors[] = 'Asset description cannot be empty.';
+    }
+
+    if (empty($admin_form_errors) && $admin_asset_post) {
+        wp_update_post(
+            array(
+                'ID'           => $admin_asset_post->ID,
+                'post_title'   => $admin_asset_title,
+                'post_content' => $admin_asset_description,
+            )
+        );
+
+        update_post_meta($admin_asset_post->ID, 'wf_asset_text', $admin_asset_text);
+
+        $asset_kind = '' !== $admin_asset_text ? 'text' : 'file';
+
+        if ($admin_asset_has_file) {
+            if (!function_exists('media_handle_upload')) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+                require_once ABSPATH . 'wp-admin/includes/media.php';
+                require_once ABSPATH . 'wp-admin/includes/image.php';
+            }
+
+            $attachment_id = media_handle_upload('admin_asset_file', $admin_asset_post->ID);
+            if (is_wp_error($attachment_id)) {
+                $admin_form_errors[] = $attachment_id->get_error_message();
+            } else {
+                update_post_meta($admin_asset_post->ID, 'wf_asset_attachment_id', $attachment_id);
+                $asset_kind = '' !== $admin_asset_text ? 'mixed' : 'file';
+            }
+        }
+
+        if (empty($admin_form_errors)) {
+            update_post_meta($admin_asset_post->ID, 'wf_asset_kind', $asset_kind);
+
+            wp_safe_redirect(
+                add_query_arg(
+                    array(
+                        'dashboard_tab' => 'tab-admin-review',
+                        'request_id' => $admin_selected_request->ID,
+                        'admin_asset_updated' => '1',
+                    ),
+                    website_flexi_get_dashboard_url()
+                ) . '#tab-admin-review'
+            );
+            exit;
+        }
+    }
+}
+
+if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_workspace_submit']) && $is_admin_user) {
+    $initial_tab = 'tab-admin-workspace';
+
+    if (!isset($_POST['website_flexi_admin_workspace_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['website_flexi_admin_workspace_nonce'])), 'website_flexi_admin_workspace_action')) {
+        $admin_form_errors[] = 'Security check failed while saving workspace.';
+    }
+
+    $admin_workspace_request_id = isset($_POST['workspace_request_id']) ? absint($_POST['workspace_request_id']) : 0;
+    $admin_workspace_request = $admin_workspace_request_id ? get_post($admin_workspace_request_id) : null;
+
+    if (!$admin_workspace_request || 'wf_project_request' !== $admin_workspace_request->post_type) {
+        $admin_form_errors[] = 'Invalid project selected for workspace.';
+    }
+
+    $workspace_plan = isset($_POST['workspace_plan']) ? sanitize_textarea_field(wp_unslash($_POST['workspace_plan'])) : '';
+    $workspace_goals = isset($_POST['workspace_goals']) ? sanitize_textarea_field(wp_unslash($_POST['workspace_goals'])) : '';
+    $workspace_decision_status = isset($_POST['workspace_decision_status']) ? sanitize_key(wp_unslash($_POST['workspace_decision_status'])) : 'approved';
+
+    if (!in_array($workspace_decision_status, array('approved', 'in_need'), true)) {
+        $workspace_decision_status = 'approved';
+    }
+
+    $workspace_step_done = isset($_POST['workspace_step_done']) && is_array($_POST['workspace_step_done']) ? array_map('absint', $_POST['workspace_step_done']) : array();
+    $workspace_step_fields = isset($_POST['workspace_step_fields']) && is_array($_POST['workspace_step_fields']) ? $_POST['workspace_step_fields'] : array();
+    $workspace_steps = array();
+
+    foreach ($workspace_step_fields as $step_index => $step_text_raw) {
+        $step_text = sanitize_text_field(wp_unslash($step_text_raw));
+        if ('' === $step_text) {
+            continue;
+        }
+
+        $workspace_steps[] = array(
+            'text' => $step_text,
+            'done' => in_array((int) $step_index, $workspace_step_done, true),
+        );
+    }
+
+    $workspace_needs_raw = isset($_POST['workspace_need_fields']) && is_array($_POST['workspace_need_fields']) ? $_POST['workspace_need_fields'] : array();
+    $workspace_need_fields = array();
+    foreach ($workspace_needs_raw as $workspace_need_item) {
+        $workspace_need_text = sanitize_text_field(wp_unslash($workspace_need_item));
+        if ('' !== $workspace_need_text) {
+            $workspace_need_fields[] = $workspace_need_text;
+        }
+    }
+
+    if ('' === $workspace_plan) {
+        $admin_form_errors[] = 'Please define the project plan.';
+    }
+
+    if ('' === $workspace_goals) {
+        $admin_form_errors[] = 'Please define project goals.';
+    }
+
+    if (empty($workspace_steps)) {
+        $admin_form_errors[] = 'Please add at least one project step.';
+    }
+
+    if ('in_need' === $workspace_decision_status && empty($workspace_need_fields)) {
+        $admin_form_errors[] = 'Please add at least one required item before setting More Assets In Need.';
+    }
+
+    if (empty($admin_form_errors) && $admin_workspace_request) {
+        $previous_workspace_status = (string) get_post_meta($admin_workspace_request->ID, 'wf_request_status', true);
+
+        update_post_meta($admin_workspace_request->ID, 'wf_project_plan_text', $workspace_plan);
+        update_post_meta($admin_workspace_request->ID, 'wf_project_goals_text', $workspace_goals);
+        update_post_meta($admin_workspace_request->ID, 'wf_project_steps', $workspace_steps);
+        update_post_meta($admin_workspace_request->ID, 'wf_project_workspace_updated_at', wp_date('Y-m-d H:i:s'));
+
+        if ('approved' === $workspace_decision_status) {
+            update_post_meta($admin_workspace_request->ID, 'wf_request_status', 'approved');
+            update_post_meta($admin_workspace_request->ID, 'wf_request_needs', array());
+            update_post_meta($admin_workspace_request->ID, 'wf_decline_reason', '');
+        } else {
+            $workspace_needs_payload = array();
+            foreach ($workspace_need_fields as $workspace_need_text) {
+                $workspace_needs_payload[] = array(
+                    'text' => $workspace_need_text,
+                    'done' => false,
+                );
+            }
+
+            update_post_meta($admin_workspace_request->ID, 'wf_request_status', 'in_need');
+            update_post_meta($admin_workspace_request->ID, 'wf_request_needs', $workspace_needs_payload);
+            update_post_meta($admin_workspace_request->ID, 'wf_decline_reason', '');
+        }
+
+        $new_workspace_status = (string) get_post_meta($admin_workspace_request->ID, 'wf_request_status', true);
+        if ($previous_workspace_status !== $new_workspace_status) {
+            update_post_meta($admin_workspace_request->ID, 'wf_status_notification', 'unread');
+            update_post_meta($admin_workspace_request->ID, 'wf_status_changed_at', wp_date('Y-m-d H:i:s'));
+        }
+
+        wp_safe_redirect(
+            add_query_arg(
+                array(
+                    'dashboard_tab' => 'tab-admin-workspace',
+                    'workspace_request' => $admin_workspace_request->ID,
+                    'request_id' => $admin_workspace_request->ID,
+                    'admin_workspace_saved' => '1',
+                ),
+                website_flexi_get_dashboard_url()
+            ) . '#tab-admin-workspace'
         );
         exit;
     }
@@ -613,8 +858,79 @@ if ($is_admin_user && $admin_selected_request_id > 0) {
     }
 }
 
+if ($is_admin_user && $admin_selected_request && 'wf_project_request' === $admin_selected_request->post_type) {
+    $admin_review_assets_query = new WP_Query(
+        array(
+            'post_type'      => 'wf_client_asset',
+            'post_status'    => 'publish',
+            'author'         => (int) $admin_selected_request->post_author,
+            'posts_per_page' => 50,
+        )
+    );
+}
+
+if ($is_admin_user) {
+    if ($admin_workspace_request_id <= 0 && $admin_selected_request_id > 0) {
+        $admin_workspace_request_id = $admin_selected_request_id;
+    }
+
+    if ($admin_workspace_request_id > 0) {
+        $admin_workspace_request = get_post($admin_workspace_request_id);
+
+        if (!$admin_workspace_request || 'wf_project_request' !== $admin_workspace_request->post_type) {
+            $admin_workspace_request = null;
+        }
+    }
+}
+
+if ($admin_workspace_request && 'wf_project_request' === $admin_workspace_request->post_type && !isset($_POST['website_flexi_admin_workspace_submit'])) {
+    $workspace_plan = (string) get_post_meta($admin_workspace_request->ID, 'wf_project_plan_text', true);
+    $workspace_goals = (string) get_post_meta($admin_workspace_request->ID, 'wf_project_goals_text', true);
+    $stored_workspace_steps = get_post_meta($admin_workspace_request->ID, 'wf_project_steps', true);
+    $stored_workspace_status = (string) get_post_meta($admin_workspace_request->ID, 'wf_request_status', true);
+
+    if (is_array($stored_workspace_steps) && !empty($stored_workspace_steps)) {
+        $workspace_steps = array();
+        foreach ($stored_workspace_steps as $stored_step) {
+            $workspace_steps[] = array(
+                'text' => isset($stored_step['text']) ? (string) $stored_step['text'] : '',
+                'done' => !empty($stored_step['done']),
+            );
+        }
+    }
+
+    if (empty($workspace_steps)) {
+        $workspace_steps = array(
+            array(
+                'text' => '',
+                'done' => false,
+            ),
+        );
+    }
+
+    if ('in_need' === $stored_workspace_status) {
+        $workspace_decision_status = 'in_need';
+        $stored_workspace_needs = get_post_meta($admin_workspace_request->ID, 'wf_request_needs', true);
+        if (is_array($stored_workspace_needs) && !empty($stored_workspace_needs)) {
+            $workspace_need_fields = array();
+            foreach ($stored_workspace_needs as $stored_need) {
+                if (!empty($stored_need['text'])) {
+                    $workspace_need_fields[] = (string) $stored_need['text'];
+                }
+            }
+            if (empty($workspace_need_fields)) {
+                $workspace_need_fields = array('');
+            }
+        }
+    } else {
+        $workspace_decision_status = 'approved';
+    }
+}
+
 if ($is_admin_user && (isset($_POST['website_flexi_admin_request_update']) || isset($_GET['request_id']))) {
-    $initial_tab = 'tab-admin-requests';
+    if (!isset($_GET['dashboard_tab'])) {
+        $initial_tab = 'tab-admin-review';
+    }
 }
 
 $user_request_ids = get_posts(
@@ -740,6 +1056,8 @@ get_header();
                 <button class="dashboard-tab" type="button" data-tab-target="tab-account">Account Details</button>
                 <?php if ($is_admin_user) : ?>
                     <button class="dashboard-tab" type="button" data-tab-target="tab-admin-requests">Admin Requests</button>
+                    <button class="dashboard-tab" type="button" data-tab-target="tab-admin-review">Review Project</button>
+                    <button class="dashboard-tab" type="button" data-tab-target="tab-admin-workspace">Project Workspace</button>
                 <?php endif; ?>
                 <a class="dashboard-tab dashboard-tab-link" href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>">Logout</a>
             </aside>
@@ -1152,15 +1470,8 @@ get_header();
                             <ul class="dashboard-list">
                                 <?php while ($admin_requests_query->have_posts()) : $admin_requests_query->the_post(); ?>
                                     <?php
-                                    $row_status = (string) get_post_meta(get_the_ID(), 'wf_request_status', true);
-                                    $row_status = isset($request_status_labels[$row_status]) ? $request_status_labels[$row_status] : 'Submitted';
-                                    $edit_link = add_query_arg(
-                                        array(
-                                            'dashboard_tab' => 'tab-admin-requests',
-                                            'request_id'    => get_the_ID(),
-                                        ),
-                                        website_flexi_get_dashboard_url()
-                                    ) . '#tab-admin-requests';
+                                    $row_status_key = (string) get_post_meta(get_the_ID(), 'wf_request_status', true);
+                                    $row_status = isset($request_status_labels[$row_status_key]) ? $request_status_labels[$row_status_key] : 'Submitted';
                                     ?>
                                     <li>
                                         <span>
@@ -1172,9 +1483,30 @@ get_header();
                                             <form class="inline-review-form" method="post" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-admin-requests">
                                                 <?php wp_nonce_field('website_flexi_admin_pick_action', 'website_flexi_admin_pick_nonce'); ?>
                                                 <input type="hidden" name="pick_request_id" value="<?php echo esc_attr((string) get_the_ID()); ?>" />
+                                                <input type="hidden" name="pick_target_tab" value="tab-admin-requests" />
                                                 <input type="hidden" name="website_flexi_admin_pick_request" value="1" />
-                                                <button type="submit" class="inline-link-button">Review / Edit</button>
+                                                <button type="submit" class="inline-link-button">Quick Edit</button>
                                             </form>
+                                            <?php if ('processing' === $row_status_key) : ?>
+                                                |
+                                                <form class="inline-review-form" method="post" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-admin-review">
+                                                    <?php wp_nonce_field('website_flexi_admin_pick_action', 'website_flexi_admin_pick_nonce'); ?>
+                                                    <input type="hidden" name="pick_request_id" value="<?php echo esc_attr((string) get_the_ID()); ?>" />
+                                                    <input type="hidden" name="pick_target_tab" value="tab-admin-review" />
+                                                    <input type="hidden" name="website_flexi_admin_pick_request" value="1" />
+                                                    <button type="submit" class="inline-link-button">Review Project</button>
+                                                </form>
+                                            <?php endif; ?>
+                                            <?php if ('approved' === $row_status_key) : ?>
+                                                |
+                                                <form class="inline-review-form" method="post" action="<?php echo esc_url(website_flexi_get_dashboard_url()); ?>#tab-admin-workspace">
+                                                    <?php wp_nonce_field('website_flexi_admin_pick_action', 'website_flexi_admin_pick_nonce'); ?>
+                                                    <input type="hidden" name="pick_request_id" value="<?php echo esc_attr((string) get_the_ID()); ?>" />
+                                                    <input type="hidden" name="pick_target_tab" value="tab-admin-workspace" />
+                                                    <input type="hidden" name="website_flexi_admin_pick_request" value="1" />
+                                                    <button type="submit" class="inline-link-button">Open Workspace</button>
+                                                </form>
+                                            <?php endif; ?>
                                         </span>
                                     </li>
                                 <?php endwhile; ?>
@@ -1191,6 +1523,7 @@ get_header();
                             <form class="project-request-form" method="post" action="<?php echo esc_url(add_query_arg(array('dashboard_tab' => 'tab-admin-requests', 'request_id' => $admin_selected_request->ID), website_flexi_get_dashboard_url())); ?>#tab-admin-requests">
                                 <?php wp_nonce_field('website_flexi_admin_request_action', 'website_flexi_admin_request_nonce'); ?>
                                 <input type="hidden" name="admin_request_id" value="<?php echo esc_attr((string) $admin_selected_request->ID); ?>" />
+                                <input type="hidden" name="admin_redirect_tab" value="tab-admin-requests" />
 
                                 <p>
                                     <label for="admin_request_status">Admin Decision</label>
@@ -1318,6 +1651,294 @@ get_header();
                                     </p>
                                 </article>
                             </template>
+                        <?php endif; ?>
+                    </section>
+
+                    <section class="dashboard-panel glass-card" id="tab-admin-review">
+                        <h2>Review Project</h2>
+                        <p class="project-request-hint">Open a processing project, review all details, edit project data and client assets, then approve or request more assets.</p>
+
+                        <?php if ($admin_selected_request && 'wf_project_request' === $admin_selected_request->post_type) : ?>
+                            <div class="request-note request-note-processing">
+                                <strong>Project:</strong> <?php echo esc_html($admin_selected_request->post_title); ?><br />
+                                <strong>Client:</strong> <?php echo esc_html(get_the_author_meta('display_name', (int) $admin_selected_request->post_author)); ?>
+                            </div>
+
+                            <form class="project-request-form" method="post" action="<?php echo esc_url(add_query_arg(array('dashboard_tab' => 'tab-admin-review', 'request_id' => $admin_selected_request->ID), website_flexi_get_dashboard_url())); ?>#tab-admin-review">
+                                <?php wp_nonce_field('website_flexi_admin_request_action', 'website_flexi_admin_request_nonce'); ?>
+                                <input type="hidden" name="admin_request_id" value="<?php echo esc_attr((string) $admin_selected_request->ID); ?>" />
+                                <input type="hidden" name="admin_redirect_tab" value="tab-admin-review" />
+
+                                <p>
+                                    <label for="review_admin_request_status">Admin Decision</label>
+                                    <select id="review_admin_request_status" name="admin_request_status" required>
+                                        <option value="pending" <?php selected($admin_request_status, 'pending'); ?>>Pending</option>
+                                        <option value="approved" <?php selected($admin_request_status, 'approved'); ?>>Approve</option>
+                                        <option value="declined" <?php selected($admin_request_status, 'declined'); ?>>Declined</option>
+                                        <option value="in_need" <?php selected($admin_request_status, 'in_need'); ?>>More Assets In Need</option>
+                                    </select>
+                                </p>
+
+                                <p class="admin-decline-reason <?php echo 'declined' === $admin_request_status ? 'is-visible' : ''; ?>" data-admin-decline-reason>
+                                    <label for="review_admin_decline_reason">Decline Reason (shown to client)</label>
+                                    <textarea id="review_admin_decline_reason" name="admin_decline_reason" rows="3"><?php echo esc_textarea($admin_decline_reason); ?></textarea>
+                                </p>
+
+                                <div class="admin-needs-block <?php echo 'in_need' === $admin_request_status ? 'is-visible' : ''; ?>" data-admin-needs-block>
+                                    <label>Need Items (assets/data required from client)</label>
+                                    <div class="needs-list" data-admin-needs-container>
+                                        <?php foreach ($admin_need_fields as $need_field_value) : ?>
+                                            <input type="text" name="admin_need_fields[]" value="<?php echo esc_attr($need_field_value); ?>" placeholder="Add one required item" />
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <p class="project-request-hint">As you fill the last field, a new one appears automatically.</p>
+                                </div>
+
+                                <p>
+                                    <label for="review_admin_about_business">About Business</label>
+                                    <textarea id="review_admin_about_business" name="admin_about_business" rows="4" required><?php echo esc_textarea($admin_about_business); ?></textarea>
+                                </p>
+
+                                <div class="project-request-grid">
+                                    <p>
+                                        <label for="review_admin_business_type">Business Type</label>
+                                        <input type="text" id="review_admin_business_type" name="admin_business_type" value="<?php echo esc_attr($admin_business_type); ?>" required />
+                                    </p>
+
+                                    <p>
+                                        <label for="review_admin_legal_status">Legal Status</label>
+                                        <select id="review_admin_legal_status" name="admin_legal_status" required>
+                                            <option value="">Select status...</option>
+                                            <option value="fully_registered" <?php selected($admin_legal_status, 'fully_registered'); ?>>Commercial register + tax card + licenses</option>
+                                            <option value="partially_registered" <?php selected($admin_legal_status, 'partially_registered'); ?>>Partially registered</option>
+                                            <option value="not_registered" <?php selected($admin_legal_status, 'not_registered'); ?>>Not registered yet</option>
+                                        </select>
+                                    </p>
+                                </div>
+
+                                <p class="full-service-toggle">
+                                    <label>
+                                        <input type="checkbox" name="admin_needs_full_service" value="1" <?php checked($admin_needs_full_service); ?> data-admin-full-service-toggle />
+                                        Enable full-service handling for this request.
+                                    </label>
+                                </p>
+
+                                <p class="full-service-goals <?php echo $admin_needs_full_service ? 'is-visible' : ''; ?>" data-admin-full-service-goals>
+                                    <label for="review_admin_full_goals">Full Goals and Requirements</label>
+                                    <textarea id="review_admin_full_goals" name="admin_full_goals" rows="4"><?php echo esc_textarea($admin_full_goals); ?></textarea>
+                                </p>
+
+                                <div class="service-items">
+                                    <?php foreach ($admin_service_items as $admin_index => $admin_service_item) : ?>
+                                        <article class="service-item-card">
+                                            <div class="project-request-grid">
+                                                <p>
+                                                    <label>Service Needed</label>
+                                                    <select name="admin_service_items[<?php echo esc_attr((string) $admin_index); ?>][service]" required>
+                                                        <option value="">Select service...</option>
+                                                        <?php foreach ($service_catalog as $service_name) : ?>
+                                                            <option value="<?php echo esc_attr($service_name); ?>" <?php selected(isset($admin_service_item['service']) ? $admin_service_item['service'] : '', $service_name); ?>><?php echo esc_html($service_name); ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </p>
+
+                                                <p>
+                                                    <label>Actions (multi-select)</label>
+                                                    <select name="admin_service_items[<?php echo esc_attr((string) $admin_index); ?>][actions][]" multiple size="5" required>
+                                                        <?php foreach ($service_actions as $action_name) : ?>
+                                                            <option value="<?php echo esc_attr($action_name); ?>" <?php echo (isset($admin_service_item['actions']) && is_array($admin_service_item['actions']) && in_array($action_name, $admin_service_item['actions'], true)) ? 'selected' : ''; ?>><?php echo esc_html($action_name); ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </p>
+                                            </div>
+
+                                            <p>
+                                                <label>Detailed Description</label>
+                                                <textarea name="admin_service_items[<?php echo esc_attr((string) $admin_index); ?>][description]" rows="4" required><?php echo esc_textarea(isset($admin_service_item['description']) ? $admin_service_item['description'] : ''); ?></textarea>
+                                            </p>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <div class="dashboard-actions">
+                                    <button class="btn btn-primary" type="submit" name="website_flexi_admin_request_update" value="1">Save Review</button>
+                                    <?php if ('processing' === (string) get_post_meta($admin_selected_request->ID, 'wf_request_status', true) || 'approved' === (string) get_post_meta($admin_selected_request->ID, 'wf_request_status', true)) : ?>
+                                        <a class="btn btn-secondary" href="<?php echo esc_url(add_query_arg(array('dashboard_tab' => 'tab-admin-workspace', 'workspace_request' => $admin_selected_request->ID, 'request_id' => $admin_selected_request->ID), website_flexi_get_dashboard_url())); ?>#tab-admin-workspace">Open Project Workspace</a>
+                                    <?php endif; ?>
+                                </div>
+                            </form>
+
+                            <h3>Client Assets</h3>
+                            <?php if ($admin_review_assets_query && $admin_review_assets_query->have_posts()) : ?>
+                                <div class="request-cards">
+                                    <?php while ($admin_review_assets_query->have_posts()) : $admin_review_assets_query->the_post(); ?>
+                                        <?php
+                                        $review_asset_id = get_the_ID();
+                                        $review_asset_text = (string) get_post_meta($review_asset_id, 'wf_asset_text', true);
+                                        $review_asset_attachment_id = (int) get_post_meta($review_asset_id, 'wf_asset_attachment_id', true);
+                                        $review_asset_url = $review_asset_attachment_id ? wp_get_attachment_url($review_asset_attachment_id) : '';
+                                        $review_asset_mime = $review_asset_attachment_id ? (string) get_post_mime_type($review_asset_attachment_id) : '';
+                                        ?>
+                                        <article class="request-card status-processing">
+                                            <header class="request-card-head">
+                                                <div>
+                                                    <h4><?php the_title(); ?></h4>
+                                                    <p><?php echo esc_html(get_the_date()); ?></p>
+                                                </div>
+                                                <span class="status-badge status-processing">Asset</span>
+                                            </header>
+
+                                            <form class="project-request-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url(add_query_arg(array('dashboard_tab' => 'tab-admin-review', 'request_id' => $admin_selected_request->ID), website_flexi_get_dashboard_url())); ?>#tab-admin-review">
+                                                <?php wp_nonce_field('website_flexi_admin_asset_action', 'website_flexi_admin_asset_nonce'); ?>
+                                                <input type="hidden" name="admin_request_id" value="<?php echo esc_attr((string) $admin_selected_request->ID); ?>" />
+                                                <input type="hidden" name="admin_asset_id" value="<?php echo esc_attr((string) $review_asset_id); ?>" />
+
+                                                <p>
+                                                    <label>Asset Title</label>
+                                                    <input type="text" name="admin_asset_title" value="<?php echo esc_attr(get_the_title()); ?>" required />
+                                                </p>
+
+                                                <p>
+                                                    <label>Asset Description</label>
+                                                    <textarea name="admin_asset_description" rows="3" required><?php echo esc_textarea(get_the_content()); ?></textarea>
+                                                </p>
+
+                                                <p>
+                                                    <label>Text Data</label>
+                                                    <textarea name="admin_asset_text" rows="4"><?php echo esc_textarea($review_asset_text); ?></textarea>
+                                                </p>
+
+                                                <?php if (!empty($review_asset_url)) : ?>
+                                                    <div class="request-note request-note-approved">
+                                                        <a href="<?php echo esc_url($review_asset_url); ?>" target="_blank" rel="noopener noreferrer">Open Current File</a>
+                                                        <?php if (0 === strpos($review_asset_mime, 'image/')) : ?>
+                                                            <figure class="asset-preview asset-preview-image">
+                                                                <img src="<?php echo esc_url($review_asset_url); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" loading="lazy" />
+                                                            </figure>
+                                                        <?php elseif (0 === strpos($review_asset_mime, 'video/')) : ?>
+                                                            <figure class="asset-preview asset-preview-video">
+                                                                <video controls preload="metadata">
+                                                                    <source src="<?php echo esc_url($review_asset_url); ?>" type="<?php echo esc_attr($review_asset_mime); ?>" />
+                                                                    Your browser does not support the video tag.
+                                                                </video>
+                                                            </figure>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endif; ?>
+
+                                                <p>
+                                                    <label>Replace File (optional)</label>
+                                                    <input type="file" name="admin_asset_file" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" />
+                                                </p>
+
+                                                <div class="dashboard-actions">
+                                                    <button class="btn btn-secondary" type="submit" name="website_flexi_admin_asset_update" value="1">Update Asset</button>
+                                                </div>
+                                            </form>
+                                        </article>
+                                    <?php endwhile; ?>
+                                </div>
+                            <?php else : ?>
+                                <p>No assets found for this project owner yet.</p>
+                            <?php endif; ?>
+                        <?php else : ?>
+                            <p>Select a project from Admin Requests, then click Review Project.</p>
+                        <?php endif; ?>
+                    </section>
+
+                    <section class="dashboard-panel glass-card" id="tab-admin-workspace">
+                        <h2>Project Workspace</h2>
+                        <p class="project-request-hint">Set the final project strategy, goals, and step-by-step execution status. You can still request more assets anytime.</p>
+
+                        <?php if ($admin_workspace_request && 'wf_project_request' === $admin_workspace_request->post_type) : ?>
+                            <div class="request-note request-note-processing">
+                                <strong>Project:</strong> <?php echo esc_html($admin_workspace_request->post_title); ?><br />
+                                <strong>Client:</strong> <?php echo esc_html(get_the_author_meta('display_name', (int) $admin_workspace_request->post_author)); ?>
+                            </div>
+
+                            <form class="project-request-form" method="post" action="<?php echo esc_url(add_query_arg(array('dashboard_tab' => 'tab-admin-workspace', 'workspace_request' => $admin_workspace_request->ID, 'request_id' => $admin_workspace_request->ID), website_flexi_get_dashboard_url())); ?>#tab-admin-workspace">
+                                <?php wp_nonce_field('website_flexi_admin_workspace_action', 'website_flexi_admin_workspace_nonce'); ?>
+                                <input type="hidden" name="workspace_request_id" value="<?php echo esc_attr((string) $admin_workspace_request->ID); ?>" />
+
+                                <p>
+                                    <label for="workspace_plan">Project Plan</label>
+                                    <textarea id="workspace_plan" name="workspace_plan" rows="4" required><?php echo esc_textarea($workspace_plan); ?></textarea>
+                                </p>
+
+                                <p>
+                                    <label for="workspace_goals">Project Goals</label>
+                                    <textarea id="workspace_goals" name="workspace_goals" rows="4" required><?php echo esc_textarea($workspace_goals); ?></textarea>
+                                </p>
+
+                                <div class="workspace-steps-block" data-workspace-steps>
+                                    <label>Execution Steps</label>
+                                    <div class="needs-list" data-workspace-steps-container>
+                                        <?php foreach ($workspace_steps as $workspace_step_index => $workspace_step) : ?>
+                                            <label class="need-item workspace-step-item">
+                                                <input type="checkbox" name="workspace_step_done[]" value="<?php echo esc_attr((string) $workspace_step_index); ?>" <?php checked(!empty($workspace_step['done'])); ?> />
+                                                <input type="text" name="workspace_step_fields[]" value="<?php echo esc_attr(isset($workspace_step['text']) ? $workspace_step['text'] : ''); ?>" placeholder="Add one execution step" />
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <p class="project-request-hint">Each step can be marked completed or pending. A new line appears automatically when you type in the last row.</p>
+                                </div>
+
+                                <p>
+                                    <label for="workspace_decision_status">Workspace Decision</label>
+                                    <select id="workspace_decision_status" name="workspace_decision_status" data-workspace-decision required>
+                                        <option value="approved" <?php selected($workspace_decision_status, 'approved'); ?>>Approve Project</option>
+                                        <option value="in_need" <?php selected($workspace_decision_status, 'in_need'); ?>>More Assets In Need</option>
+                                    </select>
+                                </p>
+
+                                <div class="admin-needs-block <?php echo 'in_need' === $workspace_decision_status ? 'is-visible' : ''; ?>" data-workspace-needs-block>
+                                    <label>More Assets Needed</label>
+                                    <div class="needs-list" data-workspace-needs-container>
+                                        <?php foreach ($workspace_need_fields as $workspace_need_field) : ?>
+                                            <input type="text" name="workspace_need_fields[]" value="<?php echo esc_attr($workspace_need_field); ?>" placeholder="Add one required item" />
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <div class="dashboard-actions">
+                                    <button class="btn btn-primary" type="submit" name="website_flexi_admin_workspace_submit" value="1">Submit Workspace</button>
+                                </div>
+                            </form>
+
+                            <?php
+                            $workspace_saved_steps = get_post_meta($admin_workspace_request->ID, 'wf_project_steps', true);
+                            $workspace_saved_steps = is_array($workspace_saved_steps) ? $workspace_saved_steps : array();
+                            ?>
+                            <?php if (!empty($workspace_saved_steps)) : ?>
+                                <div class="workspace-plan-view">
+                                    <h3>Current Published Plan</h3>
+                                    <?php if (!empty($workspace_plan)) : ?>
+                                        <div class="request-note request-note-approved">
+                                            <strong>Plan</strong>
+                                            <p><?php echo nl2br(esc_html($workspace_plan)); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($workspace_goals)) : ?>
+                                        <div class="request-note request-note-processing">
+                                            <strong>Goals</strong>
+                                            <p><?php echo nl2br(esc_html($workspace_goals)); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="request-note request-note-needs">
+                                        <strong>Steps</strong>
+                                        <ul class="workspace-steps-list">
+                                            <?php foreach ($workspace_saved_steps as $workspace_saved_step) : ?>
+                                                <li class="<?php echo !empty($workspace_saved_step['done']) ? 'is-done' : 'is-pending'; ?>">
+                                                    <span><?php echo esc_html(isset($workspace_saved_step['text']) ? (string) $workspace_saved_step['text'] : ''); ?></span>
+                                                    <em><?php echo !empty($workspace_saved_step['done']) ? 'Completed' : 'Pending'; ?></em>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php else : ?>
+                            <p>Select an approved or processing project to open its workspace.</p>
                         <?php endif; ?>
                     </section>
                 <?php endif; ?>
