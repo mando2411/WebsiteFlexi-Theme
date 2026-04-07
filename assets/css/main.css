@@ -556,6 +556,69 @@ body.menu-open {
   margin-bottom: 5px;
 }
 
+.timeline-filter-controls {
+  margin: 10px 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timeline-filter-btn {
+  min-width: 88px;
+  border: 1px solid var(--line);
+}
+
+.timeline-filter-btn.is-active {
+  background: linear-gradient(120deg, var(--brand), var(--brand-2));
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.activity-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 9px;
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.activity-tag-review {
+  background: rgba(46, 89, 255, 0.14);
+  color: #1d3fa8;
+  border-color: rgba(46, 89, 255, 0.35);
+}
+
+.activity-tag-needs {
+  background: rgba(134, 86, 255, 0.14);
+  color: #4c2a9c;
+  border-color: rgba(134, 86, 255, 0.35);
+}
+
+.activity-tag-approve {
+  background: rgba(0, 194, 168, 0.14);
+  color: #0a6a5d;
+  border-color: rgba(0, 194, 168, 0.35);
+}
+
+.activity-tag-workspace {
+  background: rgba(255, 164, 27, 0.15);
+  color: #8c4f00;
+  border-color: rgba(255, 164, 27, 0.35);
+}
+
+.activity-tag-asset {
+  background: rgba(255, 106, 61, 0.14);
+  color: #8f2e15;
+  border-color: rgba(255, 106, 61, 0.35);
+}
+
+.timeline-empty-message {
+  margin-top: 8px;
+}
+
 .activity-timeline p {
   margin: 0;
 }

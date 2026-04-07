@@ -81,6 +81,30 @@ if (!function_exists('website_flexi_get_activity_timeline')) {
     }
 }
 
+if (!function_exists('website_flexi_get_timeline_event_meta')) {
+    function website_flexi_get_timeline_event_meta($event_key)
+    {
+        $event_key = sanitize_key((string) $event_key);
+
+        $event_map = array(
+            'admin_review' => array('label' => 'Review', 'group' => 'review'),
+            'admin_needs' => array('label' => 'Needs', 'group' => 'needs'),
+            'admin_approved' => array('label' => 'Approve', 'group' => 'approve'),
+            'admin_workspace_submit' => array('label' => 'Workspace', 'group' => 'workspace'),
+            'admin_asset_update' => array('label' => 'Asset', 'group' => 'asset'),
+        );
+
+        if (isset($event_map[$event_key])) {
+            return $event_map[$event_key];
+        }
+
+        return array(
+            'label' => 'Workspace',
+            'group' => 'workspace',
+        );
+    }
+}
+
 $service_catalog = array(
     'Facebook',
     'Instagram',
@@ -1324,14 +1348,30 @@ get_header();
                                     <div class="request-note request-note-processing">
                                         <strong>Activity Timeline</strong>
                                         <?php if (!empty($client_workspace_project['timeline'])) : ?>
-                                            <ul class="activity-timeline">
+                                            <div class="timeline-filter-controls" role="group" aria-label="Timeline filter" data-timeline-wrap>
+                                                <button class="btn btn-secondary timeline-filter-btn is-active" type="button" data-timeline-filter="all">All</button>
+                                                <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="review">Review</button>
+                                                <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="needs">Needs</button>
+                                                <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="approve">Approve</button>
+                                                <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="workspace">Workspace</button>
+                                                <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="asset">Asset</button>
+                                            </div>
+
+                                            <ul class="activity-timeline" data-timeline-list>
                                                 <?php foreach ($client_workspace_project['timeline'] as $timeline_item) : ?>
-                                                    <li>
+                                                    <?php
+                                                    $timeline_event_key = isset($timeline_item['event']) ? (string) $timeline_item['event'] : '';
+                                                    $timeline_event_meta = website_flexi_get_timeline_event_meta($timeline_event_key);
+                                                    ?>
+                                                    <li data-timeline-type="<?php echo esc_attr($timeline_event_meta['group']); ?>">
                                                         <span class="activity-time"><?php echo esc_html(isset($timeline_item['time']) ? (string) $timeline_item['time'] : ''); ?></span>
+                                                        <span class="activity-tag activity-tag-<?php echo esc_attr($timeline_event_meta['group']); ?>"><?php echo esc_html($timeline_event_meta['label']); ?></span>
                                                         <p><?php echo esc_html(isset($timeline_item['message']) ? (string) $timeline_item['message'] : ''); ?></p>
                                                     </li>
                                                 <?php endforeach; ?>
                                             </ul>
+
+                                            <p class="project-request-hint timeline-empty-message" data-timeline-empty hidden>No timeline items match this filter.</p>
                                         <?php else : ?>
                                             <p>No admin activity has been logged yet.</p>
                                         <?php endif; ?>
@@ -2113,14 +2153,30 @@ get_header();
                             <div class="request-note request-note-processing">
                                 <strong>Activity Timeline</strong>
                                 <?php if (!empty($admin_workspace_timeline)) : ?>
-                                    <ul class="activity-timeline">
+                                    <div class="timeline-filter-controls" role="group" aria-label="Timeline filter" data-timeline-wrap>
+                                        <button class="btn btn-secondary timeline-filter-btn is-active" type="button" data-timeline-filter="all">All</button>
+                                        <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="review">Review</button>
+                                        <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="needs">Needs</button>
+                                        <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="approve">Approve</button>
+                                        <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="workspace">Workspace</button>
+                                        <button class="btn btn-secondary timeline-filter-btn" type="button" data-timeline-filter="asset">Asset</button>
+                                    </div>
+
+                                    <ul class="activity-timeline" data-timeline-list>
                                         <?php foreach ($admin_workspace_timeline as $admin_timeline_item) : ?>
-                                            <li>
+                                            <?php
+                                            $admin_timeline_event_key = isset($admin_timeline_item['event']) ? (string) $admin_timeline_item['event'] : '';
+                                            $admin_timeline_event_meta = website_flexi_get_timeline_event_meta($admin_timeline_event_key);
+                                            ?>
+                                            <li data-timeline-type="<?php echo esc_attr($admin_timeline_event_meta['group']); ?>">
                                                 <span class="activity-time"><?php echo esc_html(isset($admin_timeline_item['time']) ? (string) $admin_timeline_item['time'] : ''); ?></span>
+                                                <span class="activity-tag activity-tag-<?php echo esc_attr($admin_timeline_event_meta['group']); ?>"><?php echo esc_html($admin_timeline_event_meta['label']); ?></span>
                                                 <p><?php echo esc_html(isset($admin_timeline_item['message']) ? (string) $admin_timeline_item['message'] : ''); ?></p>
                                             </li>
                                         <?php endforeach; ?>
                                     </ul>
+
+                                    <p class="project-request-hint timeline-empty-message" data-timeline-empty hidden>No timeline items match this filter.</p>
                                 <?php else : ?>
                                     <p>No activity entries yet for this project.</p>
                                 <?php endif; ?>

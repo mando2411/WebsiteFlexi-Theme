@@ -256,6 +256,11 @@ Always read this file before making any future changes.
 	Files touched: page-dashboard.php, assets/css/main.css, project prain
 	Why: Let clients track professional execution visibility while preserving admin-only editing controls.
 
+- Date: 2026-04-07
+	Change: Added Timeline filtering by event type (All/Review/Needs/Approve/Workspace/Asset) and colored type tags for faster reading.
+	Files touched: page-dashboard.php, assets/js/main.js, assets/css/main.css, project prain
+	Why: Improve timeline scan speed and help both client/admin focus on specific activity categories instantly.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.

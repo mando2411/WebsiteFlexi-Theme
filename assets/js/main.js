@@ -408,6 +408,57 @@
     });
   }
 
+  var timelineWraps = document.querySelectorAll('[data-timeline-wrap]');
+
+  timelineWraps.forEach(function (timelineWrap) {
+    var timelinePanel = timelineWrap.parentElement;
+    if (!timelinePanel) {
+      return;
+    }
+
+    var timelineButtons = timelineWrap.querySelectorAll('[data-timeline-filter]');
+    var timelineList = timelinePanel.querySelector('[data-timeline-list]');
+    var timelineItems = timelineList ? timelineList.querySelectorAll('li[data-timeline-type]') : [];
+    var timelineEmpty = timelinePanel.querySelector('[data-timeline-empty]');
+
+    if (!timelineButtons.length || !timelineItems.length) {
+      return;
+    }
+
+    function applyTimelineFilter(filterValue) {
+      var visibleCount = 0;
+
+      timelineItems.forEach(function (item) {
+        var itemType = item.getAttribute('data-timeline-type') || 'workspace';
+        var isVisible = filterValue === 'all' || itemType === filterValue;
+        item.classList.toggle('is-hidden', !isVisible);
+
+        if (isVisible) {
+          visibleCount += 1;
+        }
+      });
+
+      if (timelineEmpty) {
+        timelineEmpty.hidden = visibleCount !== 0;
+      }
+    }
+
+    timelineButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        var filterValue = button.getAttribute('data-timeline-filter') || 'all';
+
+        timelineButtons.forEach(function (currentButton) {
+          currentButton.classList.remove('is-active');
+        });
+
+        button.classList.add('is-active');
+        applyTimelineFilter(filterValue);
+      });
+    });
+
+    applyTimelineFilter('all');
+  });
+
   if (!('IntersectionObserver' in window) || !revealItems.length) {
     revealItems.forEach(function (item) {
       item.classList.add('is-visible');
