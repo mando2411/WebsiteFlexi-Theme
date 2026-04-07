@@ -261,6 +261,11 @@ Always read this file before making any future changes.
 	Files touched: page-dashboard.php, assets/js/main.js, assets/css/main.css, project prain
 	Why: Improve timeline scan speed and help both client/admin focus on specific activity categories instantly.
 
+- Date: 2026-04-07
+	Change: Redesigned client Dashboard tab into an executive overview with richer KPIs, pipeline percentages, action center, and mobile-first responsive layout.
+	Files touched: page-dashboard.php, assets/css/main.css, project prain
+	Why: Make dashboard information denser yet clearer and improve decision speed for both desktop and mobile users.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.

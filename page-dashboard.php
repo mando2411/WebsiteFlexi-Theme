@@ -1053,6 +1053,11 @@ $in_review_count = 0;
 $completed_count = 0;
 $active_services_count = 0;
 $client_workspace_projects = array();
+$pending_count = 0;
+$in_need_count = 0;
+$declined_count = 0;
+$needs_open_items_count = 0;
+$unread_status_updates_count = 0;
 
 foreach ($user_request_ids as $request_id) {
     $status = (string) get_post_meta($request_id, 'wf_request_status', true);
@@ -1069,8 +1074,15 @@ foreach ($user_request_ids as $request_id) {
         $completed_count++;
     } elseif ('processing' === $status) {
         $in_review_count++;
+    } elseif ('in_need' === $status) {
+        $submitted_count++;
+        $in_need_count++;
+    } elseif ('declined' === $status) {
+        $submitted_count++;
+        $declined_count++;
     } else {
         $submitted_count++;
+        $pending_count++;
     }
 
     if ('declined' === $status) {
@@ -1082,6 +1094,12 @@ foreach ($user_request_ids as $request_id) {
     }
 
     if ('in_need' === $status && !empty($needs_items)) {
+        foreach ($needs_items as $needs_item_row) {
+            if (empty($needs_item_row['done'])) {
+                $needs_open_items_count++;
+            }
+        }
+
         $in_need_requests[] = array(
             'id' => $request_id,
             'title' => get_the_title($request_id),
@@ -1090,6 +1108,8 @@ foreach ($user_request_ids as $request_id) {
     }
 
     if ('unread' === $notification_flag) {
+        $unread_status_updates_count++;
+
         $status_label = isset($request_status_labels[$status]) ? $request_status_labels[$status] : 'Submitted';
         $client_status_notifications[] = array(
             'title' => get_the_title($request_id),
@@ -1119,6 +1139,17 @@ foreach ($user_request_ids as $request_id) {
         );
     }
 }
+
+$total_projects_count = count($user_request_ids);
+$completion_rate = $total_projects_count > 0 ? (int) round(($completed_count / $total_projects_count) * 100) : 0;
+$workspace_ready_count = count($client_workspace_projects);
+$assets_total_count = (int) count_user_posts(get_current_user_id(), 'wf_client_asset', true);
+$pipeline_counts = array(
+    'pending' => $pending_count,
+    'in_need' => $in_need_count,
+    'processing' => $in_review_count,
+    'approved' => $completed_count,
+);
 
 $recent_requests = new WP_Query(
     array(
@@ -1191,15 +1222,78 @@ get_header();
             <div class="dashboard-panels" data-initial-tab="<?php echo esc_attr($initial_tab); ?>">
                 <section class="dashboard-panel is-active glass-card" id="tab-overview">
                     <h2>Dashboard</h2>
+                    <p class="dashboard-overview-intro">A high-level command center for your project health, priorities, and next actions.</p>
+
+                    <div class="dashboard-summary-grid">
+                        <article class="dashboard-summary-card dashboard-summary-card-primary">
+                            <p class="dashboard-summary-label">Project Completion</p>
+                            <strong><?php echo esc_html((string) $completion_rate); ?>%</strong>
+                            <p><?php echo esc_html((string) $completed_count); ?> of <?php echo esc_html((string) $total_projects_count); ?> projects approved.</p>
+                        </article>
+
+                        <article class="dashboard-summary-card">
+                            <p class="dashboard-summary-label">Open Priorities</p>
+                            <strong><?php echo esc_html((string) ($pending_count + $in_need_count + $declined_count)); ?></strong>
+                            <p>Pending: <?php echo esc_html((string) $pending_count); ?> | In Need: <?php echo esc_html((string) $in_need_count); ?> | Declined: <?php echo esc_html((string) $declined_count); ?></p>
+                        </article>
+
+                        <article class="dashboard-summary-card">
+                            <p class="dashboard-summary-label">Assets & Workspace</p>
+                            <strong><?php echo esc_html((string) $assets_total_count); ?></strong>
+                            <p>Assets uploaded, with <?php echo esc_html((string) $workspace_ready_count); ?> projects having published workspace plans.</p>
+                        </article>
+                    </div>
+
                     <div class="dashboard-kpis">
-                        <article><strong><?php echo esc_html((string) $submitted_count); ?></strong><span>Pending / In Need</span></article>
+                        <article><strong><?php echo esc_html((string) $total_projects_count); ?></strong><span>Total Projects</span></article>
+                        <article><strong><?php echo esc_html((string) $submitted_count); ?></strong><span>Pending / In Need / Declined</span></article>
                         <article><strong><?php echo esc_html((string) $in_review_count); ?></strong><span>Processing</span></article>
                         <article><strong><?php echo esc_html((string) $completed_count); ?></strong><span>Approved</span></article>
                         <article><strong><?php echo esc_html((string) $active_services_count); ?></strong><span>Active Service Lines</span></article>
+                        <article><strong><?php echo esc_html((string) $needs_open_items_count); ?></strong><span>Open Need Items</span></article>
+                        <article><strong><?php echo esc_html((string) $unread_status_updates_count); ?></strong><span>New Status Updates</span></article>
+                        <article><strong><?php echo esc_html((string) $workspace_ready_count); ?></strong><span>Workspace Ready</span></article>
                     </div>
 
-                    <div class="dashboard-actions">
-                        <button class="btn btn-primary" type="button" data-tab-target="tab-projects" id="open-new-project-request">Apply for a New Project</button>
+                    <div class="dashboard-overview-grid">
+                        <article class="dashboard-overview-card">
+                            <h3>Pipeline Snapshot</h3>
+                            <ul class="pipeline-list">
+                                <?php foreach ($pipeline_counts as $pipeline_key => $pipeline_value) : ?>
+                                    <?php
+                                    $pipeline_total = max(1, $total_projects_count);
+                                    $pipeline_percent = (int) round((((int) $pipeline_value) / $pipeline_total) * 100);
+                                    $pipeline_label = isset($request_status_labels[$pipeline_key]) ? $request_status_labels[$pipeline_key] : ucfirst($pipeline_key);
+                                    ?>
+                                    <li>
+                                        <div class="pipeline-meta">
+                                            <span class="status-badge status-<?php echo esc_attr($pipeline_key); ?>"><?php echo esc_html($pipeline_label); ?></span>
+                                            <strong><?php echo esc_html((string) $pipeline_value); ?> (<?php echo esc_html((string) $pipeline_percent); ?>%)</strong>
+                                        </div>
+                                        <div class="pipeline-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr((string) $pipeline_percent); ?>">
+                                            <span style="width: <?php echo esc_attr((string) $pipeline_percent); ?>%"></span>
+                                        </div>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </article>
+
+                        <article class="dashboard-overview-card">
+                            <h3>Action Center</h3>
+                            <ul class="dashboard-list dashboard-list-compact">
+                                <li><strong>Need Response Queue</strong><span><?php echo esc_html((string) $in_need_count); ?> project(s)</span></li>
+                                <li><strong>Declined to Rework</strong><span><?php echo esc_html((string) $declined_count); ?> project(s)</span></li>
+                                <li><strong>Assets to Organize</strong><span><?php echo esc_html((string) $assets_total_count); ?> asset(s)</span></li>
+                                <li><strong>Published Workspaces</strong><span><?php echo esc_html((string) $workspace_ready_count); ?> project(s)</span></li>
+                            </ul>
+
+                            <div class="dashboard-actions dashboard-actions-grid">
+                                <button class="btn btn-primary" type="button" data-tab-target="tab-projects" id="open-new-project-request">Apply for a New Project</button>
+                                <button class="btn btn-secondary" type="button" data-tab-target="tab-assets">Open Assets</button>
+                                <button class="btn btn-secondary" type="button" data-tab-target="tab-workspace">Open Workspace</button>
+                                <button class="btn btn-secondary" type="button" data-tab-target="tab-stats">Open Statistics</button>
+                            </div>
+                        </article>
                     </div>
 
                     <h3>Recent Requests</h3>
