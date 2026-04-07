@@ -24,6 +24,7 @@ $is_admin_user = current_user_can('manage_options');
 $allowed_dashboard_tabs = array(
     'tab-overview',
     'tab-projects',
+    'tab-workspace',
     'tab-achievements',
     'tab-assets',
     'tab-stats',
@@ -45,6 +46,40 @@ $request_status_labels = array(
     'declined' => 'Declined',
     'in_need' => 'In Need',
 );
+
+if (!function_exists('website_flexi_append_activity_timeline')) {
+    function website_flexi_append_activity_timeline($request_id, $event_key, $message)
+    {
+        $request_id = absint($request_id);
+        if ($request_id <= 0) {
+            return;
+        }
+
+        $timeline = get_post_meta($request_id, 'wf_activity_timeline', true);
+        $timeline = is_array($timeline) ? $timeline : array();
+
+        $timeline[] = array(
+            'time' => wp_date('Y-m-d H:i:s'),
+            'event' => sanitize_key((string) $event_key),
+            'message' => sanitize_text_field((string) $message),
+            'actor_id' => get_current_user_id(),
+        );
+
+        if (count($timeline) > 150) {
+            $timeline = array_slice($timeline, -150);
+        }
+
+        update_post_meta($request_id, 'wf_activity_timeline', $timeline);
+    }
+}
+
+if (!function_exists('website_flexi_get_activity_timeline')) {
+    function website_flexi_get_activity_timeline($request_id)
+    {
+        $timeline = get_post_meta(absint($request_id), 'wf_activity_timeline', true);
+        return is_array($timeline) ? array_reverse($timeline) : array();
+    }
+}
 
 $service_catalog = array(
     'Facebook',
@@ -605,6 +640,28 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_r
             update_post_meta($admin_selected_request->ID, 'wf_status_changed_at', wp_date('Y-m-d H:i:s'));
         }
 
+        website_flexi_append_activity_timeline(
+            $admin_selected_request->ID,
+            'admin_review',
+            'Admin reviewed project and set status to ' . (isset($request_status_labels[$admin_request_status]) ? $request_status_labels[$admin_request_status] : ucfirst($admin_request_status))
+        );
+
+        if ('in_need' === $admin_request_status) {
+            website_flexi_append_activity_timeline(
+                $admin_selected_request->ID,
+                'admin_needs',
+                'Admin requested additional assets/items: ' . implode(' | ', $admin_need_fields)
+            );
+        }
+
+        if ('approved' === $admin_request_status) {
+            website_flexi_append_activity_timeline(
+                $admin_selected_request->ID,
+                'admin_approved',
+                'Admin approved project and moved it to workspace planning.'
+            );
+        }
+
         wp_safe_redirect(
             add_query_arg(
                 (
@@ -696,6 +753,12 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_a
 
         if (empty($admin_form_errors)) {
             update_post_meta($admin_asset_post->ID, 'wf_asset_kind', $asset_kind);
+
+            website_flexi_append_activity_timeline(
+                $admin_selected_request->ID,
+                'admin_asset_update',
+                'Admin updated asset: ' . $admin_asset_title
+            );
 
             wp_safe_redirect(
                 add_query_arg(
@@ -806,6 +869,24 @@ if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['website_flexi_admin_w
             update_post_meta($admin_workspace_request->ID, 'wf_status_notification', 'unread');
             update_post_meta($admin_workspace_request->ID, 'wf_status_changed_at', wp_date('Y-m-d H:i:s'));
         }
+
+        $done_steps_count = 0;
+        foreach ($workspace_steps as $workspace_step_row) {
+            if (!empty($workspace_step_row['done'])) {
+                $done_steps_count++;
+            }
+        }
+
+        website_flexi_append_activity_timeline(
+            $admin_workspace_request->ID,
+            'admin_workspace_submit',
+            sprintf(
+                'Admin updated workspace: plan/goals saved, steps %1$d/%2$d completed, decision: %3$s',
+                (int) $done_steps_count,
+                (int) count($workspace_steps),
+                'approved' === $workspace_decision_status ? 'Approve Project' : 'More Assets In Need'
+            )
+        );
 
         wp_safe_redirect(
             add_query_arg(
@@ -947,6 +1028,7 @@ $submitted_count = 0;
 $in_review_count = 0;
 $completed_count = 0;
 $active_services_count = 0;
+$client_workspace_projects = array();
 
 foreach ($user_request_ids as $request_id) {
     $status = (string) get_post_meta($request_id, 'wf_request_status', true);
@@ -992,6 +1074,25 @@ foreach ($user_request_ids as $request_id) {
         );
 
         update_post_meta($request_id, 'wf_status_notification', 'read');
+    }
+
+    $project_plan_text = (string) get_post_meta($request_id, 'wf_project_plan_text', true);
+    $project_goals_text = (string) get_post_meta($request_id, 'wf_project_goals_text', true);
+    $project_steps = get_post_meta($request_id, 'wf_project_steps', true);
+    $project_steps = is_array($project_steps) ? $project_steps : array();
+
+    if ('' !== $project_plan_text || '' !== $project_goals_text || !empty($project_steps)) {
+        $client_workspace_projects[] = array(
+            'id' => $request_id,
+            'title' => get_the_title($request_id),
+            'status' => $status,
+            'status_label' => isset($request_status_labels[$status]) ? $request_status_labels[$status] : 'Pending',
+            'plan' => $project_plan_text,
+            'goals' => $project_goals_text,
+            'steps' => $project_steps,
+            'timeline' => website_flexi_get_activity_timeline($request_id),
+            'updated_at' => (string) get_post_meta($request_id, 'wf_project_workspace_updated_at', true),
+        );
     }
 }
 
@@ -1050,6 +1151,7 @@ get_header();
             <aside class="dashboard-tabs glass-card" aria-label="Dashboard Tabs">
                 <button class="dashboard-tab is-active" type="button" data-tab-target="tab-overview">Dashboard</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-projects">Projects</button>
+                <button class="dashboard-tab" type="button" data-tab-target="tab-workspace">Project Workspace</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-achievements">Achievements</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-assets">Assets</button>
                 <button class="dashboard-tab" type="button" data-tab-target="tab-stats">Statistics</button>
@@ -1170,6 +1272,75 @@ get_header();
                         </div>
                     <?php else : ?>
                         <p>No project requests yet. Start by clicking "Apply for a New Project".</p>
+                    <?php endif; ?>
+                </section>
+
+                <section class="dashboard-panel glass-card" id="tab-workspace">
+                    <h2>Project Workspace</h2>
+                    <p class="project-request-hint">This area shows your approved project strategy, goals, steps progress, and all admin timeline updates in read-only mode.</p>
+
+                    <?php if (!empty($client_workspace_projects)) : ?>
+                        <div class="request-cards">
+                            <?php foreach ($client_workspace_projects as $client_workspace_project) : ?>
+                                <article class="request-card status-<?php echo esc_attr($client_workspace_project['status']); ?> workspace-readonly-card">
+                                    <header class="request-card-head">
+                                        <div>
+                                            <h4><?php echo esc_html($client_workspace_project['title']); ?></h4>
+                                            <?php if (!empty($client_workspace_project['updated_at'])) : ?>
+                                                <p><?php echo esc_html('Last workspace update: ' . $client_workspace_project['updated_at']); ?></p>
+                                            <?php endif; ?>
+                                        </div>
+                                        <span class="status-badge status-<?php echo esc_attr($client_workspace_project['status']); ?>"><?php echo esc_html($client_workspace_project['status_label']); ?></span>
+                                    </header>
+
+                                    <?php if (!empty($client_workspace_project['plan'])) : ?>
+                                        <div class="request-note request-note-approved">
+                                            <strong>Plan</strong>
+                                            <p><?php echo nl2br(esc_html($client_workspace_project['plan'])); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($client_workspace_project['goals'])) : ?>
+                                        <div class="request-note request-note-processing">
+                                            <strong>Goals</strong>
+                                            <p><?php echo nl2br(esc_html($client_workspace_project['goals'])); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($client_workspace_project['steps']) && is_array($client_workspace_project['steps'])) : ?>
+                                        <div class="request-note request-note-needs">
+                                            <strong>Steps Progress</strong>
+                                            <ul class="workspace-steps-list">
+                                                <?php foreach ($client_workspace_project['steps'] as $client_step_item) : ?>
+                                                    <li class="<?php echo !empty($client_step_item['done']) ? 'is-done' : 'is-pending'; ?>">
+                                                        <span><?php echo esc_html(isset($client_step_item['text']) ? (string) $client_step_item['text'] : ''); ?></span>
+                                                        <em><?php echo !empty($client_step_item['done']) ? 'Completed' : 'Pending'; ?></em>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div class="request-note request-note-processing">
+                                        <strong>Activity Timeline</strong>
+                                        <?php if (!empty($client_workspace_project['timeline'])) : ?>
+                                            <ul class="activity-timeline">
+                                                <?php foreach ($client_workspace_project['timeline'] as $timeline_item) : ?>
+                                                    <li>
+                                                        <span class="activity-time"><?php echo esc_html(isset($timeline_item['time']) ? (string) $timeline_item['time'] : ''); ?></span>
+                                                        <p><?php echo esc_html(isset($timeline_item['message']) ? (string) $timeline_item['message'] : ''); ?></p>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php else : ?>
+                                            <p>No admin activity has been logged yet.</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else : ?>
+                        <p>No workspace has been published for your projects yet.</p>
                     <?php endif; ?>
                 </section>
 
@@ -1937,6 +2108,23 @@ get_header();
                                     </div>
                                 </div>
                             <?php endif; ?>
+
+                            <?php $admin_workspace_timeline = website_flexi_get_activity_timeline($admin_workspace_request->ID); ?>
+                            <div class="request-note request-note-processing">
+                                <strong>Activity Timeline</strong>
+                                <?php if (!empty($admin_workspace_timeline)) : ?>
+                                    <ul class="activity-timeline">
+                                        <?php foreach ($admin_workspace_timeline as $admin_timeline_item) : ?>
+                                            <li>
+                                                <span class="activity-time"><?php echo esc_html(isset($admin_timeline_item['time']) ? (string) $admin_timeline_item['time'] : ''); ?></span>
+                                                <p><?php echo esc_html(isset($admin_timeline_item['message']) ? (string) $admin_timeline_item['message'] : ''); ?></p>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php else : ?>
+                                    <p>No activity entries yet for this project.</p>
+                                <?php endif; ?>
+                            </div>
                         <?php else : ?>
                             <p>Select an approved or processing project to open its workspace.</p>
                         <?php endif; ?>

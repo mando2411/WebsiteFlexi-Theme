@@ -484,6 +484,10 @@ body.menu-open {
   margin-top: 18px;
 }
 
+.workspace-readonly-card {
+  border-left: 4px solid rgba(46, 89, 255, 0.45);
+}
+
 .workspace-steps-list {
   margin: 10px 0 0;
   padding: 0;
@@ -527,6 +531,33 @@ body.menu-open {
 .workspace-steps-list li.is-pending em {
   background: rgba(255, 164, 27, 0.14);
   color: #8c4f00;
+}
+
+.activity-timeline {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.activity-timeline li {
+  border: 1px dashed rgba(46, 89, 255, 0.28);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.activity-time {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.activity-timeline p {
+  margin: 0;
 }
 
 .project-request-form {

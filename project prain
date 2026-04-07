@@ -251,6 +251,11 @@ Always read this file before making any future changes.
 	Files touched: page-dashboard.php, assets/js/main.js, assets/css/main.css, project prain
 	Why: Give admins a complete project lifecycle screen from review to strategic execution tracking while keeping ability to request more assets.
 
+- Date: 2026-04-07
+	Change: Added client read-only Project Workspace tab and unified Activity Timeline logging for admin actions (review/needs/approve/asset updates/workspace step updates).
+	Files touched: page-dashboard.php, assets/css/main.css, project prain
+	Why: Let clients track professional execution visibility while preserving admin-only editing controls.
+
 ## Notes For Next Edits
 - Update this file after each meaningful change.
 - If you edit code, always document exact path and purpose in this file.
